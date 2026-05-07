@@ -1,0 +1,19 @@
+# IDE & OS
+.vs/
+.idea/
+*.user
+.DS_Store
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+*.zip
+
+# Local Configs
+appsettings.Development.json
+.env
