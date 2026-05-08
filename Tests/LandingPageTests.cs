@@ -1,27 +1,28 @@
 ﻿using Microsoft.Playwright;
-using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
-using WorldBank.Automation.Tests.Data;
 using WorldBank.Automation.Tests.Infrastructure;
 
 namespace WorldBank.Automation.Tests.Tests;
 
-[Parallelizable(ParallelScope.Self)]
-public class LandingPageTests : AiTriage
+[Parallelizable(ParallelScope.All)]
+[TestFixture]
+public class LoginScenariosTests : AiTriage
 {
-    [Test]
-    public async Task Search_WithSyntheticUser_ShouldLoadResults()
+    [SetUp]
+    public async Task NavigateToLogin()
     {
-        // 1. Arrange: Use Synthetic Data
-        var user = DataFactory.CreateTestUser();
+        // Dynamically navigates to QA, Sandbox, or Pre-Prod based on the Jenkins parameter
+        var loginUrl = $"{TestConfig.BaseUrl}/auth/login";
+        await Page.GotoAsync(loginUrl);
+    }
 
-        // 2. Act: Web-First Navigation
-        await Page.GotoAsync("https://www.worldbank.org/en/home");
-        await Page.GetByRole(AriaRole.Button, new() { Name = "Search" }).ClickAsync();
-        await Page.GetByPlaceholder("Search worldbank.org").FillAsync(user.Id);
-        await Page.GetByPlaceholder("Search worldbank.org").PressAsync("Enter");
+    [Test]
+    public async Task Login_ValidCredentials_ShouldRouteToDashboard()
+    {
+        await Page.GetByLabel("Corporate ID / Email").FillAsync("admin.user@worldbank.internal");
+        await Page.GetByLabel("Password").FillAsync("SecurePassword123!");
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
 
-        // 3. Assert: Web-First Assertions (Auto-waiting)
-        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Search Results" })).ToBeVisibleAsync();
+        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex(".*dashboard"));
     }
 }
