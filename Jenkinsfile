@@ -52,11 +52,16 @@ pipeline {
 
         stage('Clean, Restore & Compile') {
             steps {
+                // Using single quotes (''') means this runs exactly as-is in Linux
                 sh '''
-                echo "3. Restoring and Building the .NET Solution..."
-                # Using **/*.sln forces .NET to recursively find the solution file no matter what folder it is in
-                dotnet restore **/*.sln
-                dotnet build **/*.sln --configuration Release --no-restore
+                echo "3. Locating and Building the .NET Solution..."
+                
+                # Dynamically find the .sln file wherever it lives in the repo
+                SLN_FILE=$(find . -name "*.sln" | head -n 1)
+                echo "Found solution at: $SLN_FILE"
+                
+                dotnet restore "$SLN_FILE"
+                dotnet build "$SLN_FILE" --configuration Release --no-restore
                 '''
             }
         }
@@ -66,8 +71,6 @@ pipeline {
                 sh '''
                 echo "4. Installing Playwright CLI & Browsers..."
                 dotnet tool install --global Microsoft.Playwright.CLI || true
-                
-                # Removed --with-deps to prevent the Linux 'sudo' permission crash
                 playwright install chromium
                 '''
             }
@@ -78,16 +81,21 @@ pipeline {
                 script {
                     echo "Executing ${params.TEST_SUITE} suite against ${params.ENVIRONMENT} environment."
                     
-                    // Added **/*.sln here so the test runner knows exactly what to execute
-                    def testCommand = 'dotnet test **/*.sln --configuration Release --no-build'
-                    
+                    // Setup the NUnit filter dynamically
+                    def testFilter = ""
                     if (params.TEST_SUITE != 'All') {
-                        // Added quotes around the filter parameter to prevent shell parsing errors
-                        testCommand += " --filter \"TestCategory=${params.TEST_SUITE}\""
+                        testFilter = "--filter \"TestCategory=${params.TEST_SUITE}\""
                     }
 
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        sh testCommand
+                        // Using double quotes (""") allows Groovy to inject the testFilter variable,
+                        // but we must escape the bash variables with a backslash (\$)
+                        sh """
+                        SLN_FILE=\$(find . -name "*.sln" | head -n 1)
+                        echo "Testing: \$SLN_FILE"
+                        
+                        dotnet test "\$SLN_FILE" --configuration Release --no-build ${testFilter}
+                        """
                     }
                 }
             }
