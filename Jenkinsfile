@@ -36,27 +36,29 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 echo "Fetching branch: ${params.TARGET_BRANCH}..."
-                // Tells Jenkins to specifically pull the branch requested in the parameter
                 git branch: "${params.TARGET_BRANCH}", url: 'https://github.com/ViktorVakareev/Playwright-DotNet-Enterprise-Architecture.git'
             }
         }
 
         stage('Clean & Restore') {
             steps {
-                bat 'dotnet restore WorldBank.Automation.sln'
+                // Changed 'bat' to 'sh'
+                sh 'dotnet restore WorldBank.Automation.sln'
             }
         }
 
         stage('Compile Solution') {
             steps {
-                bat 'dotnet build WorldBank.Automation.sln --configuration Release --no-restore'
+                // Changed 'bat' to 'sh'
+                sh 'dotnet build WorldBank.Automation.sln --configuration Release --no-restore'
             }
         }
 
         stage('Provision Playwright Engines') {
             steps {
-                powershell '''
-                $env:PLAYWRIGHT_BROWSERS_PATH="0"
+                // Converted PowerShell to standard Linux Shell
+                sh '''
+                export PLAYWRIGHT_BROWSERS_PATH="0"
                 pwsh bin/Release/net10.0/playwright.ps1 install chromium --with-deps
                 '''
             }
@@ -67,17 +69,15 @@ pipeline {
                 script {
                     echo "Executing ${params.TEST_SUITE} suite against ${params.ENVIRONMENT} environment."
                     
-                    // Construct the dynamic test command based on parameters
                     def testCommand = 'dotnet test WorldBank.Automation.sln --configuration Release --no-build'
                     
                     if (params.TEST_SUITE != 'All') {
-                        // Uses NUnit's filter feature to only run specific TestCategories
                         testCommand += " --filter TestCategory=${params.TEST_SUITE}"
                     }
 
-                    // Run the constructed command
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        bat testCommand
+                        // Changed 'bat' to 'sh'
+                        sh testCommand
                     }
                 }
             }
