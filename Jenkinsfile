@@ -18,16 +18,15 @@ pipeline {
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
     }
 
-environment {
+    environment {
         ALLURE_RESULTS_DIR = "${WORKSPACE}/allure-results"
         TEST_ENV = "${params.ENVIRONMENT}"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
         
-        // THIS IS THE FIX: Bypasses the missing libicu OS dependency
         DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1"
-        
         DOTNET_ROOT = "${HOME}/.dotnet"
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
+        PLAYWRIGHT_BROWSERS_PATH = "0"
     }
 
     stages {
@@ -38,7 +37,7 @@ environment {
             }
         }
 
-        stage('Provision Environment (OS-Agnostic)') {
+        stage('Install .NET Core') {
             steps {
                 sh '''
                 echo "1. Downloading Microsoft official Linux .NET installer..."
@@ -46,26 +45,31 @@ environment {
                 chmod +x ./dotnet-install.sh
                 
                 echo "2. Installing .NET SDK..."
-                # Installs the latest .NET SDK directly into the Linux container
                 ./dotnet-install.sh --channel 10.0
-                
-                echo "3. Installing Playwright CLI & Browsers..."
-                export PLAYWRIGHT_BROWSERS_PATH="0"
-                dotnet tool install --global Microsoft.Playwright.CLI
-                playwright install chromium --with-deps
                 '''
             }
         }
 
-        stage('Clean & Restore') {
+        stage('Clean, Restore & Compile') {
             steps {
-                sh 'dotnet restore WorldBank.Automation.sln'
+                sh '''
+                echo "3. Restoring and Building the .NET Solution..."
+                dotnet restore WorldBank.Automation.sln
+                dotnet build WorldBank.Automation.sln --configuration Release --no-restore
+                '''
             }
         }
 
-        stage('Compile Solution') {
+        stage('Provision Playwright Engines') {
             steps {
-                sh 'dotnet build WorldBank.Automation.sln --configuration Release --no-restore'
+                sh '''
+                echo "4. Installing Playwright CLI & Browsers..."
+                # The '|| true' ensures the pipeline doesn't fail if the tool was installed on a previous run
+                dotnet tool install --global Microsoft.Playwright.CLI || true
+                
+                # Now that the solution is built, this command will succeed
+                playwright install chromium --with-deps
+                '''
             }
         }
 
