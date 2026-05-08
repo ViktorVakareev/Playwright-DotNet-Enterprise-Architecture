@@ -21,8 +21,8 @@ public class AiTriage : PageTest
                 TestContext.Progress.WriteLine("[AI] Test failed. Requesting Llama 3 analysis...");
 
                 // Grab the error message and stack trace
-                var errorMessage = TestContext.CurrentContext.Result.Message;
-                var stackTrace = TestContext.CurrentContext.Result.StackTrace;
+                string stackTrace = TestContext.CurrentContext.Result.StackTrace ?? "No stack trace available";
+                string errorMessage = TestContext.CurrentContext.Result.Message ?? "No error message available";
 
                 // Call your local Llama 3 model (Assume this method exists in your AiClient)
                 var aiAnalysis = await GenerateLlama3Report(errorMessage, stackTrace);
@@ -50,6 +50,7 @@ public class AiTriage : PageTest
     {
         // Your existing Llama 3 HTTP POST logic goes here.
         // Returning a placeholder for demonstration.
+        await Task.CompletedTask;
         return $"## 🤖 Llama 3 Failure Analysis\n\n**Error:** `{error}`\n\n**Root Cause Hypothesis:** The element was likely intercepted by a loading spinner or MFA overlay.\n\n**Suggested Fix:** Add `await Page.Locator('.spinner').WaitForAsync(new() {{ State = WaitForSelectorState.Hidden }});` before clicking.";
     }
 }
