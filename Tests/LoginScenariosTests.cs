@@ -7,9 +7,11 @@ namespace WorldBank.Automation.Tests.Tests;
 
 [Parallelizable(ParallelScope.All)]
 [TestFixture]
+[Category("Authentication")] // Maps directly to your Jenkins TEST_SUITE parameter
 public class LoginScenariosTests : AiTriage
 {
-    private const string LoginUrl = "https://sandbox.worldbank.internal/auth/login";
+    // Dynamically computes the URL based on the Jenkins TEST_ENV parameter injected during GlobalSetup
+    private string LoginUrl => $"{TestConfig.BaseUrl}/auth/login";
 
     [SetUp]
     public async Task NavigateToLogin()
@@ -22,7 +24,7 @@ public class LoginScenariosTests : AiTriage
     public async Task Login_ValidCredentials_ShouldRouteToDashboard()
     {
         await Page.GetByLabel("Corporate ID / Email").FillAsync("admin.user@worldbank.internal");
-        await Page.GetByLabel("Password").FillAsync("SecurePassword123!"); // In reality, pulled from UserSecrets
+        await Page.GetByLabel("Password").FillAsync("SecurePassword123!"); // In reality, pulled from UserSecrets via TestConfig
         await Page.GetByRole(AriaRole.Button, new() { Name = "Sign In" }).ClickAsync();
 
         await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex(".*dashboard"));
@@ -143,10 +145,11 @@ public class LoginScenariosTests : AiTriage
         await Page.EvaluateAsync("window.localStorage.clear();");
         await Page.Context.ClearCookiesAsync();
 
-        // 3. Attempt to navigate to a secure route
-        await Page.GotoAsync("https://sandbox.worldbank.internal/transfers");
+        // 3. Attempt to navigate to a secure route dynamically using the environment configuration
+        var secureRoute = $"{TestConfig.BaseUrl}/transfers";
+        await Page.GotoAsync(secureRoute);
 
-        // 4. Assert forced redirection
+        // 4. Assert forced redirection back to the dynamically mapped Login URL
         await Expect(Page).ToHaveURLAsync(LoginUrl);
         await Expect(Page.GetByText("Your session has expired.")).ToBeVisibleAsync();
     }
