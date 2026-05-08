@@ -23,13 +23,9 @@ pipeline {
         TEST_ENV = "${params.ENVIRONMENT}"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
         
-        // This is crucial: It adds the .NET tools to the Linux PATH
-        PATH = "${tool 'dotnet-10'}:$PATH"
-    }
-
-    // THIS IS THE FIX: Tell Jenkins to provision the .NET SDK
-    tools {
-        dotnetsdk 'dotnet-10'
+        // Explicitly tell Linux where to find the .NET binaries we are about to install
+        DOTNET_ROOT = "${HOME}/.dotnet"
+        PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
     }
 
     stages {
@@ -37,6 +33,25 @@ pipeline {
             steps {
                 echo "Fetching branch: ${params.TARGET_BRANCH}..."
                 git branch: "${params.TARGET_BRANCH}", url: 'https://github.com/ViktorVakareev/Playwright-DotNet-Enterprise-Architecture.git'
+            }
+        }
+
+        stage('Provision Environment (OS-Agnostic)') {
+            steps {
+                sh '''
+                echo "1. Downloading Microsoft official Linux .NET installer..."
+                curl -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
+                chmod +x ./dotnet-install.sh
+                
+                echo "2. Installing .NET SDK..."
+                # Installs the latest .NET SDK directly into the Linux container
+                ./dotnet-install.sh --channel 10.0
+                
+                echo "3. Installing Playwright CLI & Browsers..."
+                export PLAYWRIGHT_BROWSERS_PATH="0"
+                dotnet tool install --global Microsoft.Playwright.CLI
+                playwright install chromium --with-deps
+                '''
             }
         }
 
@@ -49,18 +64,6 @@ pipeline {
         stage('Compile Solution') {
             steps {
                 sh 'dotnet build WorldBank.Automation.sln --configuration Release --no-restore'
-            }
-        }
-
-        stage('Provision Playwright Engines') {
-            steps {
-                // Swapped pwsh for the cross-platform dotnet tool command
-                sh '''
-                export PLAYWRIGHT_BROWSERS_PATH="0"
-                dotnet tool install --global Microsoft.Playwright.CLI
-                export PATH="$PATH:$HOME/.dotnet/tools"
-                playwright install chromium --with-deps
-                '''
             }
         }
 
