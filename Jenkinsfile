@@ -7,29 +7,29 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
-    // 1. The Schedule (Evaluated outside of runtime parameters)
-    // H 0 * * * = Runs automatically once a day around midnight
     triggers {
         cron('H 0 * * *')
     }
 
-    // 2. The Dynamic Pipeline Parameters
     parameters {
         string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'Which Git branch should we execute?')
-        
         choice(name: 'ENVIRONMENT', choices: ['Sandbox', 'QA', 'Pre-Prod'], description: 'Target environment for test execution')
-        
         choice(name: 'TEST_SUITE', choices: ['All', 'Smoke', 'Authentication', 'Transfers'], description: 'Select the specific test category to run')
-        
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
     }
 
     environment {
         ALLURE_RESULTS_DIR = "${WORKSPACE}/allure-results"
-        
-        // Pass Jenkins parameters down to the .NET environment variables
         TEST_ENV = "${params.ENVIRONMENT}"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
+        
+        // This is crucial: It adds the .NET tools to the Linux PATH
+        PATH = "${tool 'dotnet-10'}:$PATH"
+    }
+
+    // THIS IS THE FIX: Tell Jenkins to provision the .NET SDK
+    tools {
+        dotnetsdk 'dotnet-10'
     }
 
     stages {
@@ -42,24 +42,24 @@ pipeline {
 
         stage('Clean & Restore') {
             steps {
-                // Changed 'bat' to 'sh'
                 sh 'dotnet restore WorldBank.Automation.sln'
             }
         }
 
         stage('Compile Solution') {
             steps {
-                // Changed 'bat' to 'sh'
                 sh 'dotnet build WorldBank.Automation.sln --configuration Release --no-restore'
             }
         }
 
         stage('Provision Playwright Engines') {
             steps {
-                // Converted PowerShell to standard Linux Shell
+                // Swapped pwsh for the cross-platform dotnet tool command
                 sh '''
                 export PLAYWRIGHT_BROWSERS_PATH="0"
-                pwsh bin/Release/net10.0/playwright.ps1 install chromium --with-deps
+                dotnet tool install --global Microsoft.Playwright.CLI
+                export PATH="$PATH:$HOME/.dotnet/tools"
+                playwright install chromium --with-deps
                 '''
             }
         }
@@ -76,7 +76,6 @@ pipeline {
                     }
 
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        // Changed 'bat' to 'sh'
                         sh testCommand
                     }
                 }
