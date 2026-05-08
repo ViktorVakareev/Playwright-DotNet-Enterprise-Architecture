@@ -107,8 +107,9 @@ pipeline {
             echo 'Generating Allure Quality Report...'
             allure includeProperties: false, jdk: '', results: [[path: 'WorldBank.Automation.Tests/bin/Release/net10.0/allure-results']]
             
-            echo 'Archiving Playwright Traces...'
-            archiveArtifacts artifacts: '**/playwright-traces/*.zip', allowEmptyArchive: true
+            echo 'Archiving Playwright Traces and AI Triage Reports...'
+            // Added the .md files to the artifacts collector
+            archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/*_AITriage.md', allowEmptyArchive: true
         }
     }
 }

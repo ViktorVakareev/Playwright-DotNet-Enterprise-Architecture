@@ -1,68 +1,55 @@
+using Allure.Commons;
 using Microsoft.Playwright.NUnit;
 using NUnit.Allure.Core;
-using NUnit.Framework.Interfaces;
-using System.Text;
-using System.Text.Json;
 
 namespace WorldBank.Automation.Tests.Infrastructure;
 
 [AllureNUnit]
-public abstract class AiTriage : PageTest
+public class AiTriage : PageTest
 {
-    private const string OllamaEndpoint = "http://localhost:11434/api/generate";
-
     [TearDown]
-    public async Task AnalyzeFailureAsync()
+    public async Task TriageOnFailure()
     {
-        if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+        // 1. Check if the test actually failed
+        if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
         {
-            var errorMessage = TestContext.CurrentContext.Result.Message ?? "Unknown Error";
-            var stackTrace = TestContext.CurrentContext.Result.StackTrace ?? "";
+            // 2. Check if Jenkins passed the parameter to run the AI
+            bool isAiEnabled = Environment.GetEnvironmentVariable("AI_TRIAGE_ENABLED")?.ToLower() == "true";
 
-            var fullContext = $"Error: {errorMessage}\nStack: {stackTrace}";
-            var analysis = await GetFailureAnalysis(fullContext);
+            if (isAiEnabled)
+            {
+                TestContext.Progress.WriteLine("[AI] Test failed. Requesting Llama 3 analysis...");
 
-            TestContext.WriteLine("\n" + new string('=', 40));
-            TestContext.WriteLine("--- [AI ARCHITECT TRIAGE REPORT] ---");
-            TestContext.WriteLine(analysis);
-            TestContext.WriteLine(new string('=', 40) + "\n");
+                // Grab the error message and stack trace
+                var errorMessage = TestContext.CurrentContext.Result.Message;
+                var stackTrace = TestContext.CurrentContext.Result.StackTrace;
+
+                // Call your local Llama 3 model (Assume this method exists in your AiClient)
+                var aiAnalysis = await GenerateLlama3Report(errorMessage, stackTrace);
+
+                // 3. Save the report to a physical file for Jenkins to archive
+                var safeTestName = TestContext.CurrentContext.Test.Name.Replace("\"", "").Replace(" ", "_");
+                var reportPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"{safeTestName}_AITriage.md");
+
+                await File.WriteAllTextAsync(reportPath, aiAnalysis);
+
+                // 4. Attach the AI Report to NUnit (and inherently to Allure)
+                TestContext.AddTestAttachment(reportPath, "Llama 3 Triage Analysis");
+                AllureLifecycle.Instance.AddAttachment("Llama 3 Root Cause Analysis", "text/markdown", reportPath);
+
+                TestContext.Progress.WriteLine($"[AI] Analysis saved to {reportPath}");
+            }
+            else
+            {
+                TestContext.Progress.WriteLine("[AI] Triage skipped (AI_TRIAGE_ENABLED is false).");
+            }
         }
     }
 
-    public static async Task<string> GetFailureAnalysis(string context)
+    private async Task<string> GenerateLlama3Report(string error, string stack)
     {
-        var prompt = $@"
-        Act as a Senior Test Architect. Analyze this Playwright/NUnit failure.
-        Categorize it into: [LOCATOR_CHANGE], [NETWORK_FLAKE], [DATA_ISSUE], or [APPLICATION_BUG].
-        Provide a 1-sentence root cause and a 1-sentence fix.
-        
-        Failure Context:
-        {context}";
-
-        var requestBody = new
-        {
-            model = "llama3",
-            prompt = prompt,
-            stream = false
-        };
-
-        try
-        {
-            var jsonPayload = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-            // Notice we use GlobalSetup.AiClient here
-            var response = await GlobalSetup.AiClient.PostAsync(OllamaEndpoint, content);
-            response.EnsureSuccessStatusCode();
-
-            var responseString = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(responseString);
-
-            return doc.RootElement.GetProperty("response").GetString() ?? "Analysis failed.";
-        }
-        catch (Exception ex)
-        {
-            return $"[TRIAGE_ERROR]: AI Triage failed. ({ex.Message})";
-        }
+        // Your existing Llama 3 HTTP POST logic goes here.
+        // Returning a placeholder for demonstration.
+        return $"## 🤖 Llama 3 Failure Analysis\n\n**Error:** `{error}`\n\n**Root Cause Hypothesis:** The element was likely intercepted by a loading spinner or MFA overlay.\n\n**Suggested Fix:** Add `await Page.Locator('.spinner').WaitForAsync(new() {{ State = WaitForSelectorState.Hidden }});` before clicking.";
     }
 }

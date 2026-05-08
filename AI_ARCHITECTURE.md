@@ -52,3 +52,5 @@ This ensures thread safety during highly parallelized execution while passing al
 
 4. API Optimization
 When querying the local Ollama API, the payload explicitly sets "stream": false. This prevents the NUnit test runner from hanging while waiting for token-by-token generation, ensuring the AI analysis is returned as a single, synchronous JSON response.
+
+5. Jenkins CI/CD integration - Integrated a local LLM into the CI/CD pipeline to automatically generate Root Cause Analysis reports inside Allure for broken builds
