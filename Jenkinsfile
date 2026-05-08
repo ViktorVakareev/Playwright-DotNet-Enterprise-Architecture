@@ -54,9 +54,9 @@ pipeline {
             steps {
                 sh '''
                 echo "3. Restoring and Building the .NET Solution..."
-                # Removed the hardcoded filename so .NET auto-discovers the project
-                dotnet restore
-                dotnet build --configuration Release --no-restore
+                # Using **/*.sln forces .NET to recursively find the solution file no matter what folder it is in
+                dotnet restore **/*.sln
+                dotnet build **/*.sln --configuration Release --no-restore
                 '''
             }
         }
@@ -66,7 +66,9 @@ pipeline {
                 sh '''
                 echo "4. Installing Playwright CLI & Browsers..."
                 dotnet tool install --global Microsoft.Playwright.CLI || true
-                playwright install chromium --with-deps
+                
+                # Removed --with-deps to prevent the Linux 'sudo' permission crash
+                playwright install chromium
                 '''
             }
         }
@@ -76,11 +78,12 @@ pipeline {
                 script {
                     echo "Executing ${params.TEST_SUITE} suite against ${params.ENVIRONMENT} environment."
                     
-                    // Removed the hardcoded filename here as well
-                    def testCommand = 'dotnet test --configuration Release --no-build'
+                    // Added **/*.sln here so the test runner knows exactly what to execute
+                    def testCommand = 'dotnet test **/*.sln --configuration Release --no-build'
                     
                     if (params.TEST_SUITE != 'All') {
-                        testCommand += " --filter TestCategory=${params.TEST_SUITE}"
+                        // Added quotes around the filter parameter to prevent shell parsing errors
+                        testCommand += " --filter \"TestCategory=${params.TEST_SUITE}\""
                     }
 
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
@@ -89,6 +92,7 @@ pipeline {
                 }
             }
         }
+    }
 
     post {
         always {
