@@ -18,12 +18,14 @@ pipeline {
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
     }
 
-    environment {
+environment {
         ALLURE_RESULTS_DIR = "${WORKSPACE}/allure-results"
         TEST_ENV = "${params.ENVIRONMENT}"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
         
-        // Explicitly tell Linux where to find the .NET binaries we are about to install
+        // THIS IS THE FIX: Bypasses the missing libicu OS dependency
+        DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1"
+        
         DOTNET_ROOT = "${HOME}/.dotnet"
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
     }
