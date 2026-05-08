@@ -1,11 +1,12 @@
+using Microsoft.Playwright.NUnit;
+using NUnit.Allure.Core;
+using NUnit.Framework.Interfaces;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
-using NUnit.Framework.Interfaces;
 
 namespace WorldBank.Automation.Tests.Infrastructure;
 
+[AllureNUnit]
 public abstract class AiTriage : PageTest
 {
     private const string OllamaEndpoint = "http://localhost:11434/api/generate";
