@@ -54,8 +54,9 @@ pipeline {
             steps {
                 sh '''
                 echo "3. Restoring and Building the .NET Solution..."
-                dotnet restore WorldBank.Automation.sln
-                dotnet build WorldBank.Automation.sln --configuration Release --no-restore
+                # Removed the hardcoded filename so .NET auto-discovers the project
+                dotnet restore
+                dotnet build --configuration Release --no-restore
                 '''
             }
         }
@@ -64,10 +65,7 @@ pipeline {
             steps {
                 sh '''
                 echo "4. Installing Playwright CLI & Browsers..."
-                # The '|| true' ensures the pipeline doesn't fail if the tool was installed on a previous run
                 dotnet tool install --global Microsoft.Playwright.CLI || true
-                
-                # Now that the solution is built, this command will succeed
                 playwright install chromium --with-deps
                 '''
             }
@@ -78,7 +76,8 @@ pipeline {
                 script {
                     echo "Executing ${params.TEST_SUITE} suite against ${params.ENVIRONMENT} environment."
                     
-                    def testCommand = 'dotnet test WorldBank.Automation.sln --configuration Release --no-build'
+                    // Removed the hardcoded filename here as well
+                    def testCommand = 'dotnet test --configuration Release --no-build'
                     
                     if (params.TEST_SUITE != 'All') {
                         testCommand += " --filter TestCategory=${params.TEST_SUITE}"
@@ -87,6 +86,9 @@ pipeline {
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh testCommand
                     }
+                }
+            }
+        }
                 }
             }
         }
