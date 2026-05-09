@@ -147,3 +147,5 @@ public class LandingPageTests : AiTriage
 
         // Force Playwright to wait for all network traffic to finish
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+    }
+}
