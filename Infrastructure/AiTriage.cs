@@ -45,33 +45,34 @@ public class AiTriage : PageTest
     {
         try
         {
-            // Pull the URL we just defined in the Jenkinsfile
-            string baseUrl = Environment.GetEnvironmentVariable("OLLAMA_API_URL") ?? "http://localhost:11434";
-
+            string baseUrl = Environment.GetEnvironmentVariable("OLLAMA_API_URL") ?? "http://host.docker.internal:11434";
             using var client = new HttpClient();
             client.BaseAddress = new Uri(baseUrl);
-            client.Timeout = TimeSpan.FromSeconds(30); // AI can take a moment to think
+            client.Timeout = TimeSpan.FromSeconds(60); // AI needs time to think
 
             var payload = new
             {
-                model = "llama3",
-                prompt = $"You are a Senior QA Automation Engineer. Analyze this Playwright .NET failure and suggest a fix.\n\nError: {error}\n\nStack: {stack}",
+                model = "llama3", // Ensure this matches exactly what 'ollama list' shows
+                prompt = $"Explain why this test failed and suggest a fix:\nError: {error}\nStack: {stack}",
                 stream = false
             };
 
+            // Ensure the endpoint is exactly /api/generate
             var response = await client.PostAsJsonAsync("/api/generate", payload);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<Newtonsoft.Json.Linq.JObject>();
-                return result?["response"]?.ToString() ?? "AI returned an empty response.";
+                var result = await response.Content.ReadFromJsonAsync<dynamic>();
+                // Ollama returns the text in a property called "response"
+                return result?.response?.ToString() ?? "AI returned empty text.";
             }
 
-            return $"> **AI Triage Warning:** Could not reach Llama 3 (Status: {response.StatusCode}). Check if Ollama is running.";
+            // This is where your current error is coming from
+            return $"> **AI Triage Warning:** Ollama reachable but returned {response.StatusCode}. (Is llama3 pulled?)";
         }
         catch (Exception ex)
         {
-            return $"> **AI Triage Error:** {ex.Message}. Verify that Ollama is listening on 0.0.0.0 and port 11434 is open.";
+            return $"> **AI Triage Error:** {ex.Message}";
         }
     }
 }       
