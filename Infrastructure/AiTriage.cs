@@ -1,4 +1,5 @@
 using Allure.Commons;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Allure.Core;
 using System.Net.Http.Json;
@@ -39,6 +40,19 @@ public class AiTriage : PageTest
                 );
             }
         }
+    }
+
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        var options = base.ContextOptions() ?? new BrowserNewContextOptions();
+
+        // Set the base URL here once and for all!
+        options.BaseURL = "http://sandbox.worldbank.internal:8081";
+
+        // Remember that HTTPS bypass we talked about earlier? You can add it here too!
+        options.IgnoreHTTPSErrors = true;
+
+        return options;
     }
 
     private async Task<string> GenerateLlama3Report(string error, string stack)
