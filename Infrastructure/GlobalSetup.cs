@@ -1,16 +1,18 @@
 ﻿using NUnit.Framework;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Threading;
 
 namespace WorldBank.Automation.Tests;
 
 [SetUpFixture]
 public class GlobalSetup
 {
-    // This holds all failures in memory until the very end
     public static readonly ConcurrentBag<string> AiReports = new();
 
-    // This goes up two levels from the bin folder to the project root
+    // 1. Move the Traffic Light here!
+    public static readonly SemaphoreSlim AiQueue = new SemaphoreSlim(1, 1);
+
     private static string ReportPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "AiTriage_Summary.md");
 
     [OneTimeSetUp]
@@ -22,10 +24,14 @@ public class GlobalSetup
     [OneTimeTearDown]
     public void GlobalTeardownMethod()
     {
-        if (AiReports.IsEmpty) return;
+        if (!AiReports.IsEmpty)
+        {
+            string header = "# 🤖 Llama 3 Aggregate Failure Analysis\n\n";
+            File.WriteAllText(ReportPath, header + string.Join("\n", AiReports));
+            TestContext.Progress.WriteLine($"[AI] Master report generated: {ReportPath}");
+        }
 
-        // Create the one single file that Jenkins will show
-        string header = "# 🤖 Llama 3 Failure Analysis Summary\n\n";
-        File.WriteAllText(ReportPath, header + string.Join("\n", AiReports));
+        // 2. Properly dispose of the queue when the ENTIRE test run is completely finished
+        AiQueue?.Dispose();
     }
 }
