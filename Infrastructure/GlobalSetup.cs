@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 
-namespace WorldBank.Automation.Tests.Infrastructure;
+namespace WorldBank.Automation.Tests;
 
 [SetUpFixture]
 public class GlobalSetup
@@ -10,8 +10,8 @@ public class GlobalSetup
     // This holds all failures in memory until the very end
     public static readonly ConcurrentBag<string> AiReports = new();
 
-    // The single summary file name
-    private static string ReportPath => Path.Combine(TestContext.CurrentContext.WorkDirectory, "AiTriage_Summary.md");
+    // This goes up two levels from the bin folder to the project root
+    private static string ReportPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "AiTriage_Summary.md");
 
     [OneTimeSetUp]
     public void GlobalSetupMethod()

@@ -110,9 +110,8 @@ pipeline {
             echo 'Generating Allure Quality Report...'
             allure includeProperties: false, jdk: '', results: [[path: 'bin/Release/net10.0/allure-results']]
             
-            echo 'Archiving Playwright Traces and AI Triage Reports...'
-            // Updated to look for our single summary file
-            archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md', allowEmptyArchive: true
+            echo 'Archiving Single AI Summary Report...'
+            archiveArtifacts artifacts: '**/AiTriage_Summary.md', allowEmptyArchive: false
         }
     }
 }
