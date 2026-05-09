@@ -1,28 +1,31 @@
 ﻿using NUnit.Framework;
+using System.Collections.Concurrent;
+using System.IO;
 
 namespace WorldBank.Automation.Tests.Infrastructure;
 
 [SetUpFixture]
 public class GlobalSetup
 {
-    public static HttpClient AiClient { get; private set; } = null!;
+    // This holds all failures in memory until the very end
+    public static readonly ConcurrentBag<string> AiReports = new();
+
+    // The single summary file name
+    private static string ReportPath => Path.Combine(TestContext.CurrentContext.WorkDirectory, "AiTriage_Summary.md");
 
     [OneTimeSetUp]
-    public void RunBeforeAnyTests()
+    public void GlobalSetupMethod()
     {
-        // 1. Initialize the global configuration from Jenkins
-        TestConfig.Initialize();
-
-        // 2. Initialize the AI Triage Client
-        AiClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-
-        TestContext.Progress.WriteLine($"[INIT] Target Environment set to: {TestConfig.TargetEnvironment}");
-        TestContext.Progress.WriteLine($"[INIT] Base URL mapped to: {TestConfig.BaseUrl}");
+        if (File.Exists(ReportPath)) File.Delete(ReportPath);
     }
 
     [OneTimeTearDown]
-    public void RunAfterAllTests()
+    public void GlobalTeardownMethod()
     {
-        AiClient?.Dispose();
+        if (AiReports.IsEmpty) return;
+
+        // Create the one single file that Jenkins will show
+        string header = "# 🤖 Llama 3 Failure Analysis Summary\n\n";
+        File.WriteAllText(ReportPath, header + string.Join("\n", AiReports));
     }
 }

@@ -23,6 +23,9 @@ pipeline {
         TEST_ENV = "${params.ENVIRONMENT}"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
         
+        // ADD THIS LINE:
+        OLLAMA_API_URL = "http://host.docker.internal:11434"
+
         DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1"
         DOTNET_ROOT = "${HOME}/.dotnet"
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
@@ -105,11 +108,11 @@ pipeline {
     post {
         always {
             echo 'Generating Allure Quality Report...'
-            // Updated path to reflect the actual root workspace build directory
             allure includeProperties: false, jdk: '', results: [[path: 'bin/Release/net10.0/allure-results']]
             
             echo 'Archiving Playwright Traces and AI Triage Reports...'
-            archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/*_AITriage.md', allowEmptyArchive: true
+            // Updated to look for our single summary file
+            archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md', allowEmptyArchive: true
         }
     }
 }
