@@ -52,7 +52,7 @@ public class AiTriage : PageTest
 
             var payload = new
             {
-                model = "llama3", // Ensure this matches exactly what 'ollama list' shows
+                model = "llama3:latest", // Ensure this matches exactly what 'ollama list' shows
                 prompt = $"Explain why this test failed and suggest a fix:\nError: {error}\nStack: {stack}",
                 stream = false
             };
