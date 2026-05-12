@@ -38,16 +38,22 @@ pipeline {
         }
 
         stage('Clean, Restore & Compile') {
-            when { expression { return !params.usePrebuilt } }
+            when {
+                anyOf {
+                    // Rule 1: Always build if NOT on main
+                    expression { params.branch != 'main' }
+                    // Rule 2: Build on main ONLY if 'usePrebuilt' is false
+                    expression { params.branch == 'main' && !params.usePrebuilt }
+                }
+            }
             steps {
                 sh '''
                 SLN_FILE=$(find . -name "*.sln" | head -n 1)
-                echo "Building solution: $SLN_FILE"
                 dotnet restore "$SLN_FILE"
                 dotnet build "$SLN_FILE" --configuration Release --no-restore
                 '''
             }
-        }
+        }        
 
         stage('Execute Automated Quality Gates') {
             environment {
