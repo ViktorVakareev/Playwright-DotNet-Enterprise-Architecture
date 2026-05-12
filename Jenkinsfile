@@ -53,15 +53,13 @@ pipeline {
                 dotnet build "$SLN_FILE" --configuration Release --no-restore
                 
                 echo "--- Installing Playwright CLI Tool ---"
-                # 1. Create a local tool manifest to track CLI tools
                 dotnet new tool-manifest --force
-                
-                # 2. Install the Playwright CLI as a local tool
                 dotnet tool install Microsoft.Playwright.CLI
                 
-                echo "--- Installing Browsers and Linux Dependencies ---"
-                # 3. Use the tool to install browsers and the OS-level libraries
-                dotnet tool run playwright install --with-deps
+                echo "--- Installing Browser Binaries ---"
+                # We remove --with-deps to avoid the "su: Authentication failure"
+                # This assumes the OS already has the required libraries.
+                dotnet tool run playwright install chromium
                 '''
             }
         }
