@@ -74,9 +74,9 @@ public class AiTriage : PageTest
                 // 2. Add to global list (for Allure summary)
                 GlobalSetup.AiReports.Add(entry);
 
-                // 3. FIX: Write to physical file for Jenkins Artifacts
-                // This ensures the file is created/updated as soon as a test fails
-                await File.AppendAllTextAsync("AiTriage_Summary.md", entry);
+                var workspacePath = Environment.GetEnvironmentVariable("WORKSPACE") ?? ".";
+                var reportPath = Path.Combine(workspacePath, "AiTriage_Summary.md");
+                await File.AppendAllTextAsync(reportPath, entry);
 
                 try
                 {

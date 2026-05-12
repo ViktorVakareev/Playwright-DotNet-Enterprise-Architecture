@@ -63,6 +63,7 @@ pipeline {
             }
             steps {
                 script {
+                    sh "ls -la bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
                     def filterFlag = params.inputTestFilter ? "--filter \"${params.inputTestFilter}\"" : ""
                     echo "Executing tests. Filter: ${params.inputTestFilter ?: 'ALL'}"
                     
