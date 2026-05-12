@@ -1,12 +1,11 @@
 {
-  {
-    "Server": {
-      "Url": "http://host.docker.internal:8085/api/v1",
-      "Project": "worldbank_core"
-    },
-    "Launch": {
-      "Name": "Jenkins Live Stream",
-      "Description": "Playwright Enterprise Suite",
-      "Attributes": [ "Jenkins", "Chrome" ]
-    }
+  "Server": {
+    "Url": "http://host.docker.internal:8085/api/v1",
+    "Project": "worldbank_core"
+  },
+  "Launch": {
+    "Name": "Jenkins Enterprise Run",
+    "Description": "Playwright Automation Suite",
+    "Attributes": [ "CI", "Main" ]
   }
+}
