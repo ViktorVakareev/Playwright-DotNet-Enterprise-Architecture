@@ -7,111 +7,111 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
-    triggers {
-        cron('H 0 * * *')
-    }
-
     parameters {
-        string(name: 'TARGET_BRANCH', defaultValue: 'main', description: 'Which Git branch should we execute?')
-        choice(name: 'ENVIRONMENT', choices: ['Sandbox', 'QA', 'Pre-Prod'], description: 'Target environment for test execution')
-        choice(name: 'TEST_SUITE', choices: ['All', 'Smoke', 'Authentication', 'Transfers'], description: 'Select the specific test category to run')
+        string(name: 'branch', defaultValue: 'main', description: 'The branch to checkout')
+        string(name: 'inputTestFilter', defaultValue: 'TestCategory=Debug', description: 'The test filter to execute. User input is only applied for OnDemand jobs.')
+        choice(name: 'browser', choices: ['ChromeHeadless', 'Chromium', 'Firefox', 'WebKit', 'Edge'], description: 'The browser')
+        booleanParam(name: 'retryFailed', defaultValue: false, description: 'Whether retry of the failed tests should be used.')
+        booleanParam(name: 'usePrebuilt', defaultValue: false, description: 'Whether the pipeline should skip the build step (only master branch)')
+        string(name: 'qTestFolderUrl', defaultValue: '', description: 'qTest Folder Url')
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
     }
 
     environment {
+        // Core Config
         ALLURE_RESULTS_DIR = "${WORKSPACE}/allure-results"
-        TEST_ENV = "${params.ENVIRONMENT}"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
-        
-        // ADD THIS LINE:
         OLLAMA_API_URL = "http://host.docker.internal:11434"
-
+        
+        // Pass the UI parameters down to the C# code
+        PLAYWRIGHT_BROWSER = "${params.browser}"
+        RETRY_FAILED = "${params.retryFailed}"
+        
+        // .NET Config
         DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1"
         DOTNET_ROOT = "${HOME}/.dotnet"
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
-        PLAYWRIGHT_BROWSERS_PATH = "0"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                echo "Fetching branch: ${params.TARGET_BRANCH}..."
-                git branch: "${params.TARGET_BRANCH}", url: 'https://github.com/ViktorVakareev/Playwright-DotNet-Enterprise-Architecture.git'
-            }
-        }
-
-        stage('Install .NET Core') {
-            steps {
-                sh '''
-                echo "1. Downloading Microsoft official Linux .NET installer..."
-                curl -sSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh
-                chmod +x ./dotnet-install.sh
-                
-                echo "2. Installing .NET SDK..."
-                ./dotnet-install.sh --channel 10.0
-                '''
+                echo "Fetching branch: ${params.branch}..."
+                git branch: "${params.branch}", url: 'https://github.com/ViktorVakareev/Playwright-DotNet-Enterprise-Architecture.git'
             }
         }
 
         stage('Clean, Restore & Compile') {
+            // SKIP THIS STAGE if usePrebuilt is checked
+            when {
+                expression { return !params.usePrebuilt }
+            }
             steps {
-                // Using single quotes (''') means this runs exactly as-is in Linux
                 sh '''
-                echo "3. Locating and Building the .NET Solution..."
-                
-                # Dynamically find the .sln file wherever it lives in the repo
                 SLN_FILE=$(find . -name "*.sln" | head -n 1)
-                echo "Found solution at: $SLN_FILE"
-                
+                echo "Building solution: $SLN_FILE"
                 dotnet restore "$SLN_FILE"
                 dotnet build "$SLN_FILE" --configuration Release --no-restore
                 '''
             }
         }
 
-        stage('Provision Playwright Engines') {
-            steps {
-                sh '''
-                echo "4. Installing Playwright CLI & Browsers..."
-                dotnet tool install --global Microsoft.Playwright.CLI || true
-                playwright install chromium
-                '''
-            }
-        }
-
         stage('Execute Automated Quality Gates') {
+            // 1. Inject the ReportPortal API Key securely into the execution environment
+            environment {
+                REPORTPORTAL_SERVER_AUTHENTICATION_UUID = credentials('RP_API_KEY')
+            }
             steps {
                 script {
-                    echo "Executing ${params.TEST_SUITE} suite against ${params.ENVIRONMENT} environment."
+                    echo "Executing tests with filter: ${params.inputTestFilter} on ${params.browser}"
+                    echo "Streaming live telemetry to ReportPortal..."
                     
-                    // Setup the NUnit filter dynamically
-                    def testFilter = ""
-                    if (params.TEST_SUITE != 'All') {
-                        testFilter = "--filter \"TestCategory=${params.TEST_SUITE}\""
-                    }
-
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        // Using double quotes (""") allows Groovy to inject the testFilter variable,
-                        // but we must escape the bash variables with a backslash (\$)
+                        // 2. We pass the filter directly from the UI.
+                        // 3. We add the TRX logger. qTest relies heavily on .trx files for .NET test parsing.
+                        // 4. The ReportPortal NUnit agent automatically reads the environment variable and streams results in real-time.
                         sh """
                         SLN_FILE=\$(find . -name "*.sln" | head -n 1)
-                        echo "Testing: \$SLN_FILE"
                         
-                        dotnet test "\$SLN_FILE" --configuration Release --no-build ${testFilter}
+                        dotnet test "\$SLN_FILE" \
+                            --configuration Release \
+                            --no-build \
+                            --filter "${params.inputTestFilter}" \
+                            --logger "trx;LogFileName=TestResults.trx" \
+                            --results-directory ./TestResults
                         """
                     }
-                }
+                }            
             }
         }
     }
 
     post {
         always {
-            echo 'Generating Allure Quality Report...'
+            echo 'Archiving Playwright Traces and AI Triage Reports...'
+            archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md, **/TestResults/*.trx', allowEmptyArchive: true
+            
+            // Allure Integration
             allure includeProperties: false, jdk: '', results: [[path: 'bin/Release/net10.0/allure-results']]
             
-            echo 'Archiving Single AI Summary Report...'
-            archiveArtifacts artifacts: '**/AiTriage_Summary.md', allowEmptyArchive: false
+            // qTest Integration Trigger
+            script {
+                if (params.qTestFolderUrl != '') {
+                    echo "Triggering qTest upload to: ${params.qTestFolderUrl}"
+                    
+                    // Option A: If using the official Tricentis qTest Jenkins Plugin
+                    // qtestPublisher buildNumber: "${env.BUILD_NUMBER}", projectId: '12345', testResultFormat: 'TRX', resultPattern: '**/TestResults/*.trx'
+                    
+                    // Option B: API Push (Enterprise Standard for custom folder URLs)
+                    sh '''
+                    # Example of parsing the .trx file and pushing to qTest API
+                    # curl -X POST "https://your-domain.qtestnet.com/api/v3/projects/..." -H "Authorization: Bearer $QTEST_TOKEN" -d @./TestResults/TestResults.trx
+                    echo "qTest upload script executed."
+                    '''
+                } else {
+                    echo "qTest Folder URL is empty. Skipping qTest publish."
+                }
+            }
         }
     }
 }

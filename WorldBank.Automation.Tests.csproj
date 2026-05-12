@@ -27,10 +27,18 @@
 		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
 
 		<PackageReference Include="Microsoft.Playwright.NUnit" Version="1.59.0" />
+
+		<PackageReference Include="ReportPortal.NUnit" Version="4.9.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Using Include="NUnit.Framework" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="ReportPortal.config.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>

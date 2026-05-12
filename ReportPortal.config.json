@@ -1,0 +1,11 @@
+{
+     "Server": {
+       "Url": "http://host.docker.internal:8085/api/v1",
+       "Project": "worldbank_core"
+     },
+     "Launch": {
+       "Name": "Jenkins Nightly Gate",
+       "Description": "Playwright UI Automation Suite",
+       "IsDebugMode": false
+     }
+   }

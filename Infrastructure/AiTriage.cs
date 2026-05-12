@@ -1,15 +1,59 @@
 using Allure.Commons;
+using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Allure.Core;
 using NUnit.Framework;
-using System.Text;
+using System;
 using System.Net.Http.Json;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace WorldBank.Automation.Tests.Infrastructure;
 
 [AllureNUnit]
 public class AiTriage : PageTest
 {
+    // 1. Map Jenkins variables to Native Playwright variables BEFORE tests start
+    public AiTriage()
+    {
+        var browserEnv = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSER")?.ToLower();
+
+        if (!string.IsNullOrEmpty(browserEnv))
+        {
+            // Set native Playwright Browser (chromium, firefox, or webkit)
+            if (browserEnv.Contains("firefox"))
+                Environment.SetEnvironmentVariable("BROWSER", "firefox");
+            else if (browserEnv.Contains("webkit"))
+                Environment.SetEnvironmentVariable("BROWSER", "webkit");
+            else
+                Environment.SetEnvironmentVariable("BROWSER", "chromium");
+
+            // Set native Playwright Headless mode
+            bool isHeadless = browserEnv.Contains("headless");
+            Environment.SetEnvironmentVariable("HEADLESS", isHeadless ? "true" : "false");
+
+            // Set native Playwright Channel (forces standard Google Chrome instead of Chromium)
+            if (browserEnv.StartsWith("chrome"))
+            {
+                Environment.SetEnvironmentVariable("BROWSER_CHANNEL", "chrome");
+            }
+            else
+            {
+                Environment.SetEnvironmentVariable("BROWSER_CHANNEL", null);
+            }
+        }
+    }
+
+    // 2. Set your Mock App BaseURL (This IS a valid Playwright override)
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        var options = base.ContextOptions() ?? new BrowserNewContextOptions();
+        options.BaseURL = "http://sandbox.worldbank.internal:8081";
+        options.IgnoreHTTPSErrors = true;
+
+        return options;
+    }
+
     [TearDown]
     public async Task TriageOnFailure()
     {
@@ -29,14 +73,22 @@ public class AiTriage : PageTest
                 string entry = $"### ❌ {testName}\n{aiAnalysis}\n\n---\n";
                 GlobalSetup.AiReports.Add(entry);
 
-                AllureLifecycle.Instance.AddAttachment($"AI Analysis - {testName}", "text/markdown", Encoding.UTF8.GetBytes(aiAnalysis), ".md");
+                // Try to attach to Allure, but don't crash if Allure lost context during a [SetUp] failure
+                try
+                {
+                    AllureLifecycle.Instance.AddAttachment($"AI Analysis - {testName}", "text/markdown", Encoding.UTF8.GetBytes(aiAnalysis), ".md");
+                }
+                catch (ArgumentNullException)
+                {
+                    TestContext.Progress.WriteLine($"[WARNING] Allure lost context for {testName}. AI Report saved to Master Summary only.");
+                }
             }
         }
     }
 
     private async Task<string> ProcessAiRequestWithQueue(string error, string stack)
     {
-        // 1. Point to the Global Traffic Light
+        // Point to the Global Traffic Light
         await GlobalSetup.AiQueue.WaitAsync();
 
         try
@@ -45,7 +97,7 @@ public class AiTriage : PageTest
         }
         finally
         {
-            // 2. Release the Global Traffic Light
+            // Release the Global Traffic Light
             GlobalSetup.AiQueue.Release();
         }
     }
@@ -58,7 +110,7 @@ public class AiTriage : PageTest
             using var client = new HttpClient();
             client.BaseAddress = new Uri(baseUrl);
 
-            // 4. INCREASE TIMEOUT: Give the AI up to 3 minutes just in case it is a "cold start"
+            // INCREASE TIMEOUT: Give the AI up to 3 minutes just in case it is a "cold start"
             client.Timeout = TimeSpan.FromMinutes(3);
 
             var payload = new
