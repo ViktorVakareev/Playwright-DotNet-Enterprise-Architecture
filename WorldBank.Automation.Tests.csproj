@@ -36,9 +36,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="ReportPortal.config.json">
+	  <None Remove="ReportPortal.config.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="ReportPortal.config.json">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+	  </Content>
 	</ItemGroup>
 
 </Project>
