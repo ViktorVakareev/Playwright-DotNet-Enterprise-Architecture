@@ -84,9 +84,7 @@ pipeline {
         always {
             echo 'Archiving Playwright Traces and AI Triage Reports...'
             archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md, **/TestResults/*.trx', allowEmptyArchive: true
-            
-            // Use the environment variable for Allure consistency
-            allure includeProperties: false, jdk: '', results: [[path: "${env.ALLURE_RESULTS_DIR}"]]
+            allure includeProperties: false, results: [[path: "${env.ALLURE_RESULTS_DIR}"]]
             
             script {
                 if (params.qTestFolderUrl != '') {
