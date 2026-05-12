@@ -52,7 +52,7 @@ pipeline {
                 
                 # FINAL PIECE: Install Playwright Browsers inside the Jenkins agent
                 # This ensures the executables exist for the test run
-                dotnet bin/Release/net10.0/Microsoft.Playwright.dll install --with-deps
+                dotnet exec bin/Release/net10.0/Microsoft.Playwright.dll install --with-deps
                 '''
             }
         }      
