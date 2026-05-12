@@ -2,8 +2,7 @@ using Allure.Commons;
 using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Allure.Core;
-using NUnit.Framework;
-using System;
+using System.IO;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
@@ -67,20 +66,25 @@ public class AiTriage : PageTest
                 var stackTrace = TestContext.CurrentContext.Result.StackTrace ?? "No stack trace available";
                 var errorMessage = TestContext.CurrentContext.Result.Message ?? "No error message available";
 
-                // Wait in line before talking to the AI
                 var aiAnalysis = await ProcessAiRequestWithQueue(errorMessage, stackTrace);
 
-                string entry = $"### ❌ {testName}\n{aiAnalysis}\n\n---\n";
+                // 1. Create the entry
+                string entry = $"### ❌ {testName}\n\n**Analysis:**\n{aiAnalysis}\n\n**Error:** `{errorMessage}`\n\n---\n";
+
+                // 2. Add to global list (for Allure summary)
                 GlobalSetup.AiReports.Add(entry);
 
-                // Try to attach to Allure, but don't crash if Allure lost context during a [SetUp] failure
+                // 3. FIX: Write to physical file for Jenkins Artifacts
+                // This ensures the file is created/updated as soon as a test fails
+                await File.AppendAllTextAsync("AiTriage_Summary.md", entry);
+
                 try
                 {
                     AllureLifecycle.Instance.AddAttachment($"AI Analysis - {testName}", "text/markdown", Encoding.UTF8.GetBytes(aiAnalysis), ".md");
                 }
                 catch (ArgumentNullException)
                 {
-                    TestContext.Progress.WriteLine($"[WARNING] Allure lost context for {testName}. AI Report saved to Master Summary only.");
+                    TestContext.Progress.WriteLine($"[WARNING] Allure lost context for {testName}.");
                 }
             }
         }
