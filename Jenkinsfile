@@ -47,15 +47,22 @@ pipeline {
             steps {
                 sh '''
                 SLN_FILE=$(find . -name "*.sln" | head -n 1)
+                
+                echo "--- Restoring and Building ---"
                 dotnet restore "$SLN_FILE"
                 dotnet build "$SLN_FILE" --configuration Release --no-restore
                 
-                # FINAL PIECE: Install Playwright Browsers inside the Jenkins agent
-                # This ensures the executables exist for the test run
-                dotnet exec bin/Release/net10.0/Microsoft.Playwright.dll install --with-deps
+                echo "--- Installing Playwright CLI Tool ---"
+                # This creates a local tool manifest and installs Playwright as a tool
+                dotnet new tool-manifest --force
+                dotnet tool install Microsoft.Playwright.CLI
+                
+                echo "--- Installing Browsers ---"
+                # This is the correct way to trigger the install in a container
+                dotnet tool run playwright install --with-deps
                 '''
             }
-        }      
+        }     
 
         stage('Execute Automated Quality Gates') {
             environment {
