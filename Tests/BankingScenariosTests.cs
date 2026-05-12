@@ -122,6 +122,7 @@ public class BankingScenariosTests : AiTriage
 
     // 9. Routing Verification
     [Test]
+    [Category("Debug")]
     public async Task Navigation_Logout_ShouldRouteToLogin()
     {
         await Page.GetByRole(AriaRole.Button, new() { Name = "Sign Out" }).ClickAsync();
