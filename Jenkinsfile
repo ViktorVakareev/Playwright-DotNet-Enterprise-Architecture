@@ -40,9 +40,7 @@ pipeline {
         stage('Clean, Restore & Compile') {
             when {
                 anyOf {
-                    // Rule 1: Always build if NOT on main
                     expression { params.branch != 'main' }
-                    // Rule 2: Build on main ONLY if 'usePrebuilt' is false
                     expression { params.branch == 'main' && !params.usePrebuilt }
                 }
             }
@@ -51,9 +49,13 @@ pipeline {
                 SLN_FILE=$(find . -name "*.sln" | head -n 1)
                 dotnet restore "$SLN_FILE"
                 dotnet build "$SLN_FILE" --configuration Release --no-restore
+                
+                # FINAL PIECE: Install Playwright Browsers inside the Jenkins agent
+                # This ensures the executables exist for the test run
+                dotnet bin/Release/net10.0/Microsoft.Playwright.dll install --with-deps
                 '''
             }
-        }        
+        }      
 
         stage('Execute Automated Quality Gates') {
             environment {
