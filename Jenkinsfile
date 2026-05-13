@@ -10,7 +10,7 @@ pipeline {
 
     parameters {
         string(name: 'branch', defaultValue: 'main', description: 'The branch to checkout')
-        string(name: 'inputTestFilter', defaultValue: '', description: 'NUnit filter (e.g., Category=Smoke). Leave blank to run all tests
+        string(name: 'TEST_FILTER', defaultValue: '', description: 'Filter tests. Leave blank to run all tests')
         choice(name: 'browser', choices: ['ChromeHeadless', 'Chromium', 'Firefox', 'WebKit', 'Edge'], description: 'The browser')
         booleanParam(name: 'retryFailed', defaultValue: false, description: 'Whether retry of the failed tests should be used.')
         booleanParam(name: 'usePrebuilt', defaultValue: false, description: 'Skip build step (main branch only)')
