@@ -10,8 +10,7 @@ pipeline {
 
     parameters {
         string(name: 'branch', defaultValue: 'main', description: 'The branch to checkout')
-        string(name: 'inputTestFilter', defaultValue: '', description: 'NUnit filter (e.g., Category=Smoke). Leave blank to run all tests.')
-        string(name: 'APP_URL', defaultValue: 'http://host.docker.internal:8081', description: 'Base URL of the application to test')
+        string(name: 'inputTestFilter', defaultValue: '', description: 'NUnit filter (e.g., Category=Smoke). Leave blank to run all tests
         choice(name: 'browser', choices: ['ChromeHeadless', 'Chromium', 'Firefox', 'WebKit', 'Edge'], description: 'The browser')
         booleanParam(name: 'retryFailed', defaultValue: false, description: 'Whether retry of the failed tests should be used.')
         booleanParam(name: 'usePrebuilt', defaultValue: false, description: 'Skip build step (main branch only)')
@@ -38,25 +37,6 @@ pipeline {
                 git branch: "${params.branch}", url: 'https://github.com/ViktorVakareev/Playwright-DotNet-Enterprise-Architecture.git'
             }
         }
-
-        stage('Execute Health Check') {
-            steps {
-                script {
-                    echo "Pinging Health Check Endpoint at: ${params.APP_URL}/monitor/health"
-                    
-                    // Use curl to extract just the HTTP status code
-                    def statusCode = sh(
-                        script: "curl -s -o /dev/null -w \"%{http_code}\" ${params.APP_URL}/monitor/health || echo '000'", 
-                        returnStdout: true
-                    ).trim()
-                    
-                    if (statusCode == "200") {
-                        echo "✅ App is UP and Healthy! (Status: 200)"
-                    } else {
-                        error("❌ Health check failed! Received HTTP Status: ${statusCode}. App might be down.")
-                    }
-                }
-            }
 
         stage('Clean, Restore & Compile') {
             when {
