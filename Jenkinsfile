@@ -71,10 +71,21 @@ pipeline {
             }
             steps {
                 script {
+                    // 1. Verify ReportPortal configuration
                     sh "ls -la bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
+                    
+                    // 2. Boot up the mock web server in the background (&) using port 8081
+                    echo 'Starting local mock web server on port 8081...'
+                    sh 'python3 -m http.server 8081 &'
+                    
+                    // 3. Give the server 3 seconds to fully wake up before firing tests
+                    sleep time: 3, unit: 'SECONDS'
+
+                    // 4. Setup dynamic filtering based on your parameters
                     def filterFlag = params.inputTestFilter ? "--filter \"${params.inputTestFilter}\"" : ""
                     echo "Executing tests. Filter: ${params.inputTestFilter ?: 'ALL'}"
                     
+                    // 5. Execute the test suite
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
                         SLN_FILE=\$(find . -name "*.sln" | head -n 1)
@@ -89,7 +100,6 @@ pipeline {
                 }
             }
         }
-    } // End of Stages
 
     post {
         always {
