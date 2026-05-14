@@ -10,6 +10,10 @@ pipeline {
 
     parameters {
         string(name: 'branch', defaultValue: 'main', description: 'The branch to checkout')
+        
+        // NEW: Environment selection dropdown
+        choice(name: 'TARGET_ENV', choices: ['dev', 'test', 'prod'], description: 'Select the target cloud environment for test execution')
+        
         string(name: 'TEST_FILTER', defaultValue: '', description: 'Filter tests. Leave blank to run all tests')
         choice(name: 'browser', choices: ['ChromeHeadless', 'Chromium', 'Firefox', 'WebKit', 'Edge'], description: 'The browser')
         booleanParam(name: 'retryFailed', defaultValue: false, description: 'Whether retry of the failed tests should be used.')
@@ -19,6 +23,9 @@ pipeline {
     }
 
     environment {
+        // Expose TARGET_ENV so Playwright AppConfig.cs can read it
+        TARGET_ENV = "${params.TARGET_ENV}"
+        
         // Use a consistent directory for results
         ALLURE_RESULTS_DIR = "bin/Release/net10.0/allure-results"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
@@ -74,18 +81,16 @@ pipeline {
                     // 1. Verify ReportPortal configuration
                     sh "ls -la bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
                     
-                    // 2. Boot up the mock web server in the background (&) using port 8081
-                    echo 'Starting local mock web server on port 8081...'
-                    sh 'python3 -m http.server 8081 &'
+                    // 2. Setup dynamic filtering based on your parameters
+                    def filterFlag = params.TEST_FILTER ? "--filter \"${params.TEST_FILTER}\"" : ""
                     
-                    // 3. Give the server 3 seconds to fully wake up before firing tests
-                    sleep time: 3, unit: 'SECONDS'
-
-                    // 4. Setup dynamic filtering based on your parameters
-                    def filterFlag = params.inputTestFilter ? "--filter \"${params.inputTestFilter}\"" : ""
-                    echo "Executing tests. Filter: ${params.inputTestFilter ?: 'ALL'}"
+                    echo "====================================================="
+                    echo "🚀 INITIATING PLAYWRIGHT SUITE"
+                    echo "🌍 TARGET ENVIRONMENT: ${env.TARGET_ENV.toUpperCase()}"
+                    echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
+                    echo "====================================================="
                     
-                    // 5. Execute the test suite
+                    // 3. Execute the test suite directly against GitHub Pages
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
                         SLN_FILE=\$(find . -name "*.sln" | head -n 1)
@@ -100,9 +105,11 @@ pipeline {
                 }
             }
         }
+    }
 
     post {
         always {
+            echo "Pipeline execution complete for environment: ${env.TARGET_ENV}"
             echo 'Archiving Playwright Traces and AI Triage Reports...'
             archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md, **/TestResults/*.trx', allowEmptyArchive: true
             allure includeProperties: false, results: [[path: "${env.ALLURE_RESULTS_DIR}"]]
