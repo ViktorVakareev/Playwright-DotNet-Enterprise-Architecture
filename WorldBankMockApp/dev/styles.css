@@ -1,0 +1,230 @@
+/* =========================================
+   1. VARIABLES & THEMING
+   ========================================= */
+:root {
+  --bg-color: #f4f7f6;
+  --surface-color: #ffffff;
+  --text-main: #333333;
+  --text-muted: #777777;
+  --primary: #005A9C;
+  --border: #dddddd;
+  --success: #28a745;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --nav-active: #e3000f; /* Bold Red */
+  --nav-hover: #b3000c;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --text-main: #e0e0e0;
+  --text-muted: #aaaaaa;
+  --primary: #4da3ff;
+  --border: #333333;
+  --nav-active: #ff4d58; /* Lighter red for dark mode contrast */
+  --nav-hover: #ff7a83;
+}
+
+/* =========================================
+   2. BASE STYLES
+   ========================================= */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-main);
+  margin: 0; /* Ensures the header touches the edges */
+  transition: background 0.3s, color 0.3s;
+}
+
+/* =========================================
+   3. UNIVERSAL NAVIGATION
+   ========================================= */
+.universal-header {
+  background-color: var(--surface-color);
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background-color 0.3s;
+}
+
+/* Top Tier */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.logo-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--nav-active);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+/* Environment Toggle Pills */
+.pill-toggle {
+  display: flex;
+  background: var(--bg-color);
+  border-radius: 30px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.pill-toggle a {
+  padding: 8px 20px;
+  text-decoration: none;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.pill-toggle a.active {
+  background: var(--nav-active);
+  color: white;
+  border-radius: 30px;
+}
+
+/* Utilities (Top Right) */
+.header-utilities a {
+  color: var(--text-main);
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.header-utilities a:hover {
+  color: var(--nav-active);
+}
+
+/* Bottom Tier (Main Links) */
+.header-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+}
+
+.main-nav-links {
+  display: flex;
+  gap: 30px;
+}
+
+.main-nav-links a {
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: color 0.2s;
+}
+
+.main-nav-links a:hover {
+  color: var(--nav-active);
+}
+
+/* Login/Logout Button */
+.action-btn {
+  background: var(--nav-active);
+  color: white;
+  padding: 10px 28px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background 0.3s, transform 0.1s;
+  display: inline-block;
+}
+
+.action-btn:hover {
+  background: var(--nav-hover);
+  transform: scale(1.02);
+}
+
+/* =========================================
+   4. LAYOUT & CONTAINERS
+   ========================================= */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.card {
+  background: var(--surface-color);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid var(--border);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* =========================================
+   5. UI COMPONENTS
+   ========================================= */
+/* Badges */
+.badge { 
+  padding: 4px 8px; 
+  border-radius: 12px; 
+  font-size: 0.8rem; 
+  font-weight: bold; 
+  color: white; 
+}
+.bg-success { background: var(--success); }
+.bg-warning { background: var(--warning); color: #333; }
+.bg-danger { background: var(--danger); }
+
+/* Ledger Table */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+th { cursor: pointer; }
+th:hover { background: rgba(0,0,0,0.05); }
+[data-theme="dark"] th:hover { background: rgba(255,255,255,0.05); }
+
+/* Overlays & Modals */
+.overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px);
+}
+.overlay.active { display: block; }
+
+.modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: var(--surface-color); padding: 2rem; border-radius: 8px;
+  z-index: 1000; display: none; min-width: 300px;
+}
+.modal.active { display: block; }
+
+/* Stepper UI */
+.stepper {
+  display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative;
+}
+.stepper::before {
+  content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 1;
+}
+.step {
+  position: relative; z-index: 2; background: var(--surface-color); padding: 0 10px;
+  display: flex; flex-direction: column; align-items: center; color: var(--text-muted);
+}
+.step .circle {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--border);
+  display: flex; justify-content: center; align-items: center; font-weight: bold; margin-bottom: 5px;
+}
+.step.active { color: var(--primary); font-weight: bold; }
+.step.active .circle { background: var(--primary); color: white; }

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authentication</title>
+    
+    <!-- Added missing link to Universal Nav CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        :root { --primary: #002244; --error: #d32f2f; --bg: #f4f7f6; }
+        
+        /* FIXED: Body is now a vertical flex column so the header sits at the very top */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* NEW: Container to hold the split view taking up the remaining space below the header */
+        .login-container { display: flex; flex: 1; }
+        
+        .split-left { flex: 1; background: url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=2026&auto=format&fit=crop') center/cover; }
+        .split-right { flex: 1; display: flex; align-items: center; justify-content: center; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.05); }
+        .login-card { width: 100%; max-width: 400px; padding: 40px; }
+        h1 { color: var(--primary); font-size: 1.8rem; margin-bottom: 30px; }
+        .error { background: #ffebee; color: var(--error); padding: 12px; border-left: 4px solid var(--error); border-radius: 4px; display: none; margin-bottom: 20px; font-weight: 500; font-size: 0.9rem; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 0.9rem; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 1rem; transition: border-color 0.3s; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,34,68,0.1); }
+        button { width: 100%; background-color: var(--primary); color: white; border: none; padding: 14px; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #003366; }
+        #mfa-section { display: none; background: #fff8e1; padding: 20px; border: 1px solid #ffc107; border-radius: 4px; margin-top: 20px; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- UNIVERSAL NAVIGATION HEADER -->
+    <header class="universal-header">
+        <div class="header-top">
+            <div class="brand-section">
+                <a href="index.html" class="logo-text">WorldBank QA</a>
+                <div class="pill-toggle">
+                    <a href="index.html" class="active" data-testid="toggle-public">Public Sandbox</a>
+                    <a href="dashboard.html" data-testid="toggle-secure">Secure Sandbox</a>
+                </div>
+            </div>
+            <div class="header-utilities">
+                <a href="#">About</a>
+                <a href="#">Support 24/7</a>
+                <a href="#">Contacts</a>
+                <a href="#">EN 🌐</a>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="main-nav-links">
+                <a href="index.html" data-testid="nav-home">Home</a>
+                <a href="dashboard.html" data-testid="nav-dashboard">Dashboard</a>
+                <a href="transfer.html" data-testid="nav-transfer">Wire Transfer</a>
+                <a href="settings.html" data-testid="nav-settings">Settings</a>
+            </div>
+            <div>
+                <a href="login.html" class="action-btn" data-testid="nav-login-btn">Secure Login / Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- NEW WRAPPER FOR THE SPLIT SCREEN -->
+    <div class="login-container">
+        <div class="split-left"></div>
+        <div class="split-right">
+            <div class="login-card">
+                <h1>Authentication Gateway</h1>
+                <div id="error-message" class="error" data-testid="error-message"></div>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">Corporate ID</label>
+                        <input type="text" id="username" data-testid="input-username" placeholder="Username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Security Token</label>
+                        <input type="password" id="password" data-testid="input-password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" id="login-button" data-testid="btn-login-submit">Secure Login</button>
+                </form>
+
+                <div id="mfa-section" data-testid="mfa-section">
+                    <h3 style="margin-top:0; color:#d84315;">MFA Challenge</h3>
+                    <p style="font-size: 0.9rem; color: #555;">Please verify your new device.</p>
+                    <div class="form-group">
+                        <input type="text" id="mfa-code" data-testid="input-mfa-code" placeholder="Enter 6-digit code">
+                    </div>
+                    <button id="verify-mfa" data-testid="btn-verify-mfa">Verify Device</button>
+                </div>
+                
+                <a href="index.html" class="back-link" data-testid="link-back-home">&larr; Back to Public Site</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let failedAttempts = 0;
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('error-message');
+            
+            if (failedAttempts >= 4) {
+                err.innerText = "Account Locked due to too many failed attempts.";
+                err.style.display = "block"; return;
+            }
+            if (u.includes("' OR") || u.includes("<script>")) {
+                err.innerText = "Security Violation: Invalid Input Detected";
+                err.style.display = "block"; return;
+            }
+            if (u === "newdevice_user") {
+                document.getElementById('mfa-section').style.display = "block";
+                document.getElementById('login-form').style.display = "none"; return;
+            }
+            if (u === "standarduser" && p === "password123") {
+                document.cookie = "session=secure_token; HttpOnly; Secure";
+                window.location.href = "dashboard.html?role=standard"; return;
+            }
+            failedAttempts++;
+            err.innerText = "Invalid credentials. Generic error.";
+            err.style.display = "block";
+        });
+    </script>
+</body>
+</html>

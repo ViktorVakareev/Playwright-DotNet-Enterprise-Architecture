@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>World Bank Sandbox - Home</title>
+    
+    <!-- This link is critical! It pulls in the Universal Nav CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        /* Specific styles just for the landing page body */
+        :root { --primary: #002244; --secondary: #005596; --bg: #f4f7f6; --text: #333; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: var(--bg); color: var(--text); }
+        .hero { background: linear-gradient(rgba(0, 34, 68, 0.8), rgba(0, 34, 68, 0.8)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop') no-repeat center center; background-size: cover; color: white; text-align: center; padding: 100px 20px; }
+        .search-container { max-width: 600px; margin: -50px auto 50px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .search-container h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+        .input-group { display: flex; gap: 10px; margin-top: 20px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        button { background-color: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s; }
+        button:hover { background-color: var(--secondary); }
+        #search-results { margin-top: 20px; padding: 15px; border-radius: 4px; background: var(--bg); min-height: 20px; }
+        .result-item { display: block; padding: 10px; background: white; border-left: 4px solid var(--secondary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    
+    <!-- UNIVERSAL NAVIGATION HEADER -->
+    <header class="universal-header">
+        <!-- Top Bar: Brand, Environment Toggles, Utilities -->
+        <div class="header-top">
+            <div class="brand-section">
+                <a href="index.html" class="logo-text">WorldBank QA</a>
+                <div class="pill-toggle">
+                    <a href="index.html" class="active" data-testid="toggle-public">Public Sandbox</a>
+                    <a href="dashboard.html" data-testid="toggle-secure">Secure Sandbox</a>
+                </div>
+            </div>
+            <div class="header-utilities">
+                <a href="#">About</a>
+                <a href="#">Support 24/7</a>
+                <a href="#">Contacts</a>
+                <a href="#">EN 🌐</a>
+            </div>
+        </div>
+
+        <!-- Bottom Bar: Main Navigation Links & Action Button -->
+        <div class="header-bottom">
+            <div class="main-nav-links">
+                <a href="index.html" data-testid="nav-home">Home</a>
+                <a href="dashboard.html" data-testid="nav-dashboard">Dashboard</a>
+                <a href="transfer.html" data-testid="nav-transfer">Wire Transfer</a>
+                <a href="settings.html" data-testid="nav-settings">Settings</a>
+            </div>
+            <div>
+                <a href="login.html" class="action-btn" data-testid="nav-login-btn">Secure Login / Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero">
+        <h2>Global Financial Intelligence Network (dev)</h2>
+        <p>Enterprise sandbox environment for automated QA systems.</p>
+    </div>
+    
+    <div class="search-container">
+        <h3>Directory Search</h3>
+        <div class="input-group">
+            <input type="text" id="search-input" data-testid="search-input" placeholder="Search employees/users...">
+            <button id="search-btn" data-testid="search-btn">Search</button>
+        </div>
+        <div id="search-results" data-testid="search-results"></div>
+    </div>
+
+    <script>
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const query = document.getElementById('search-input').value;
+            const res = document.getElementById('search-results');
+            if (query.includes("Synthetic")) {
+                res.innerHTML = "<span class='result-item'>Synthetic User Profile Loaded</span>";
+            } else if (query.trim() === "") {
+                res.innerHTML = "No results found.";
+            } else {
+                res.innerHTML = "No results found.";
+            }
+        });
+    </script>
+</body>
+</html>

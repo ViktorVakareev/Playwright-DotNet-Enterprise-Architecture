@@ -1,6 +1,3 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="NuGet.config" />
-  </Folder>
-  <Project Path="WorldBank.Automation.Tests.csproj" />
+  <Project Path="WorldBank.Automation.Tests/TestResults/WorldBank.Automation.Tests.csproj" />
 </Solution>

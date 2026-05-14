@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - WorldBank Mock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- UNIVERSAL NAVIGATION HEADER -->
+    <header class="universal-header">
+        <div class="header-top">
+            <div class="brand-section">
+                <a href="index.html" class="logo-text">WorldBank QA</a>
+                <div class="pill-toggle">
+                    <a href="index.html" data-testid="toggle-public">Public Sandbox</a>
+                    <a href="dashboard.html" class="active" data-testid="toggle-secure">Secure Sandbox</a>
+                </div>
+            </div>
+            <div class="header-utilities">
+                <a href="#">About</a>
+                <a href="#">Support 24/7</a>
+                <a href="#">Contacts</a>
+                <a href="#">EN 🌐</a>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="main-nav-links">
+                <a href="index.html" data-testid="nav-home">Home</a>
+                <a href="dashboard.html" data-testid="nav-dashboard">Dashboard</a>
+                <a href="transfer.html" data-testid="nav-transfer">Wire Transfer</a>
+                <a href="settings.html" data-testid="nav-settings" style="color: var(--nav-active);">Settings</a>
+            </div>
+            <div>
+                <a href="login.html" class="action-btn" data-testid="nav-login-btn">Secure Login / Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- PAGE-LEVEL CONTROL BAR -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 data-testid="app-title" style="margin: 0; color: var(--primary);">User Preferences</h2>
+            <button onclick="window.location.href='dashboard.html'" style="padding: 8px 16px; cursor: pointer; border-radius: 4px; border: 1px solid var(--border); background: var(--surface-color); color: var(--text-main);">Back to Dashboard</button>
+        </div>
+
+        <div class="card">
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 0;">Welcome to the settings panel. Configuration options are managed by your corporate administrator.</p>
+            
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);">
+            
+            <label style="display: flex; align-items: center; margin-bottom: 15px; font-size: 1.05rem; cursor: pointer;">
+                <input type="checkbox" checked data-testid="chk-email-alerts" style="width: 18px; height: 18px; margin-right: 10px;"> 
+                Enable Email Alerts
+            </label>
+            <label style="display: flex; align-items: center; margin-bottom: 25px; font-size: 1.05rem; cursor: pointer;">
+                <input type="checkbox" data-testid="chk-sms-alerts" style="width: 18px; height: 18px; margin-right: 10px;"> 
+                Enable SMS Alerts
+            </label>
+            
+            <button data-testid="btn-save-settings" onclick="alert('Settings Saved Successfully!')" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 4px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s;">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</body>
+</html>

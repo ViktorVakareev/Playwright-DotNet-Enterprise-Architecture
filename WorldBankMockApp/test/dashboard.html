@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - WorldBank Mock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- UNIVERSAL NAVIGATION HEADER -->
+    <header class="universal-header">
+        <div class="header-top">
+            <div class="brand-section">
+                <a href="index.html" class="logo-text">WorldBank QA</a>
+                <div class="pill-toggle">
+                    <a href="index.html" data-testid="toggle-public">Public Sandbox</a>
+                    <a href="dashboard.html" class="active" data-testid="toggle-secure">Secure Sandbox</a>
+                </div>
+            </div>
+            <div class="header-utilities">
+                <a href="#">About</a>
+                <a href="#">Support 24/7</a>
+                <a href="#">Contacts</a>
+                <a href="#">EN 🌐</a>
+            </div>
+        </div>
+        <div class="header-bottom">
+            <div class="main-nav-links">
+                <a href="index.html" data-testid="nav-home">Home</a>
+                <a href="dashboard.html" data-testid="nav-dashboard">Dashboard</a>
+                <a href="transfer.html" data-testid="nav-transfer">Wire Transfer</a>
+                <a href="settings.html" data-testid="nav-settings">Settings</a>
+            </div>
+            <div>
+                <a href="login.html" class="action-btn" data-testid="nav-login-btn">Secure Login / Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay & Modal -->
+    <div class="overlay" id="overlay"></div>
+    <div class="modal" id="notification-modal" data-testid="notification-modal">
+        <h3>Unread Alerts</h3>
+        <p>⚠️ Login attempt from new device detected.</p>
+        <button id="btn-close-modal" data-testid="btn-close-modal" style="padding: 8px 16px; cursor: pointer;">Close</button>
+    </div>
+
+    <div class="container">
+        <!-- NEW PAGE-LEVEL CONTROL BAR -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 data-testid="app-title" style="margin: 0; color: var(--primary);">Dashboard Overview</h2>
+            
+            <div class="page-actions">
+                <button id="btn-dark-mode" data-testid="btn-dark-mode" style="padding: 8px 16px; margin-right: 10px; cursor: pointer; border-radius: 4px; border: 1px solid var(--border); background: var(--surface-color); color: var(--text-main);">Toggle Dark Mode</button>
+                <button id="btn-notifications" data-testid="btn-notifications" style="padding: 8px 16px; cursor: pointer; border-radius: 4px; border: 1px solid var(--border); background: var(--surface-color); color: var(--text-main);">🔔 Alerts (2)</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Account Ledger</h3>
+            <input type="text" id="search-ledger" data-testid="search-ledger" placeholder="Search transactions..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box;">
+            
+            <table id="ledger-table" data-testid="ledger-table">
+                <thead>
+                    <tr><th>Date ↕</th><th>Description</th><th>Amount</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="ledger-row" data-description="inbound wire tech llc">
+                        <td>2026-05-13</td><td>Inbound Wire - Tech LLC</td><td>+$45,000.00</td><td><span class="badge bg-success">Cleared</span></td>
+                    </tr>
+                    <tr class="ledger-row" data-description="cloud hosting provider">
+                        <td>2026-05-12</td><td>Cloud Hosting Provider</td><td>-$1,250.00</td><td><span class="badge bg-warning">Pending</span></td>
+                    </tr>
+                    <tr class="ledger-row" data-description="suspicious ach withdrawal">
+                        <td>2026-05-10</td><td>Suspicious ACH Withdrawal</td><td>-$9,999.00</td><td><span class="badge bg-danger">Flagged</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p id="no-results" data-testid="no-results-msg" style="display: none; color: var(--danger); margin-top: 15px;">No transactions found.</p>
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode Logic
+        document.getElementById('btn-dark-mode').addEventListener('click', () => {
+            const html = document.documentElement;
+            html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+        });
+
+        // Modal Logic
+        document.getElementById('btn-notifications').addEventListener('click', () => {
+            document.getElementById('notification-modal').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        });
+        document.getElementById('btn-close-modal').addEventListener('click', () => {
+            document.getElementById('notification-modal').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        });
+
+        // Search Logic
+        document.getElementById('search-ledger').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            let visibleCount = 0;
+            document.querySelectorAll('.ledger-row').forEach(row => {
+                const match = row.dataset.description.includes(term);
+                row.style.display = match ? '' : 'none';
+                if(match) visibleCount++;
+            });
+            document.getElementById('no-results').style.display = visibleCount === 0 ? 'block' : 'none';
+        });
+    </script>
+</body>
+</html>
