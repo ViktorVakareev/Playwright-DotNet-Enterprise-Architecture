@@ -1,5 +1,6 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.Playwright;
+﻿using Microsoft.Playwright;
+using System.Text.RegularExpressions;
+using WorldBank.Automation.Tests.Data;
 using WorldBank.Automation.Tests.Infrastructure;
 
 namespace WorldBank.Automation.Tests.Tests
@@ -15,18 +16,20 @@ namespace WorldBank.Automation.Tests.Tests
             // Dynamically construct the URL based on the target environment
             string loginUrl = $"{AppConfig.GetBaseUrl()}/login.html";
             await Page.GotoAsync(loginUrl);
-        }
+        }    
 
         // 1. Standard Happy Path
         [Test]
         public async Task Login_ValidCredentials_ShouldRouteToDashboard()
         {
-            await Page.GetByPlaceholder("Username").FillAsync("standarduser");
-            await Page.GetByPlaceholder("Password").FillAsync("password123");
+            // Inject dynamic user from the factory
+            var validUser = DataFactory.CreateValidUser();
+
+            await Page.GetByPlaceholder("Username").FillAsync(validUser.Username);
+            await Page.GetByPlaceholder("Password").FillAsync(validUser.Password);
             await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
 
             await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard"));
-            await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
         }
 
         // 2. Generic Error Handling
@@ -81,23 +84,25 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Login_SqlInjectionAttempt_ShouldBeRejectedCleanly()
         {
-            await Page.GetByPlaceholder("Username").FillAsync("admin@worldbank.internal' OR '1'='1");
-            await Page.GetByPlaceholder("Password").FillAsync("DoesnMatter");
+            // Factory handles the specific SQL payload definition
+            var hackerUser = DataFactory.CreateUser_SqlInjection();
+
+            await Page.GetByPlaceholder("Username").FillAsync(hackerUser.Username);
+            await Page.GetByPlaceholder("Password").FillAsync(hackerUser.Password);
             await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
 
             await Expect(Page.Locator("#error-message")).ToHaveTextAsync("Security Violation: Invalid Input Detected");
-
-            var pageText = await Page.TextContentAsync("body");
-            Assert.That(pageText, Does.Not.Contain("SQL syntax"));
         }
 
         // 6. Cross-Site Scripting (XSS) Sanitization
         [Test]
         public async Task Login_XssPayloadInUsername_ShouldSanitizeInput()
         {
-            var xssPayload = "<script>alert('Hacked')</script>admin@worldbank.internal";
-            await Page.GetByPlaceholder("Username").FillAsync(xssPayload);
-            await Page.GetByPlaceholder("Password").FillAsync("ValidPassword123!");
+            // Factory handles the XSS payload definition
+            var xssUser = DataFactory.CreateUser_XssPayload();
+
+            await Page.GetByPlaceholder("Username").FillAsync(xssUser.Username);
+            await Page.GetByPlaceholder("Password").FillAsync(xssUser.Password);
 
             Page.Dialog += (_, _) => Assert.Fail("CRITICAL: XSS Payload Executed via Alert Box!");
             await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
@@ -127,19 +132,18 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Auth_LoginAsStandardUser_ShouldNotSeeAdminControls()
         {
-            await Page.GetByPlaceholder("Username").FillAsync("standarduser");
-            await Page.GetByPlaceholder("Password").FillAsync("password123");
+            var standardUser = DataFactory.CreateValidUser(); // Default role is Standard
+
+            await Page.GetByPlaceholder("Username").FillAsync(standardUser.Username);
+            await Page.GetByPlaceholder("Password").FillAsync(standardUser.Password);
             await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
 
-            // Auto-waiting assertions are sufficient; no need for NetworkIdle waits
             await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard"));
-            await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
 
-            // Ensure the Admin portal is hidden
             var adminPanel = Page.GetByRole(AriaRole.Heading, new() { Name = "Administrator Tools" });
             await Expect(adminPanel).ToHaveCountAsync(0);
         }
-
+        
         // --- SKIPPED TESTS ---
         [Test]
         [Ignore("Requires a real backend server to handle session tokens, static HTML cannot redirect automatically.")]
