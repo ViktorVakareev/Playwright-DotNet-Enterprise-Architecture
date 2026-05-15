@@ -10,23 +10,19 @@ pipeline {
 
     parameters {
         string(name: 'branch', defaultValue: 'main', description: 'The branch to checkout')
-        
-        // NEW: Environment selection dropdown
         choice(name: 'TARGET_ENV', choices: ['dev', 'test', 'prod'], description: 'Select the target cloud environment for test execution')
-        
         string(name: 'TEST_FILTER', defaultValue: '', description: 'Filter tests. Leave blank to run all tests')
         choice(name: 'browser', choices: ['ChromeHeadless', 'Chromium', 'Firefox', 'WebKit', 'Edge'], description: 'The browser')
         booleanParam(name: 'retryFailed', defaultValue: false, description: 'Whether retry of the failed tests should be used.')
         booleanParam(name: 'usePrebuilt', defaultValue: false, description: 'Skip build step (main branch only)')
         string(name: 'qTestFolderUrl', defaultValue: '', description: 'qTest Folder Url')
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
+        // App URL parameter restored for the Health Check
+        string(name: 'APP_URL', defaultValue: 'http://host.docker.internal:8081', description: 'Base URL of the application to test')
     }
 
     environment {
-        // Expose TARGET_ENV so Playwright AppConfig.cs can read it
         TARGET_ENV = "${params.TARGET_ENV}"
-        
-        // Use a consistent directory for results
         ALLURE_RESULTS_DIR = "bin/Release/net10.0/allure-results"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
         OLLAMA_API_URL = "http://host.docker.internal:11434"
@@ -38,6 +34,26 @@ pipeline {
     }
 
     stages {
+        stage('Execute Health Check') {
+            steps {
+                script {
+                    echo "Pinging Health Check Endpoint at: ${params.APP_URL}/monitor/health"
+                    
+                    // Use curl to extract just the HTTP status code
+                    def statusCode = sh(
+                        script: "curl -s -o /dev/null -w \"%{http_code}\" ${params.APP_URL}/monitor/health || echo '000'", 
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (statusCode == "200") {
+                        echo "✅ App is UP and Healthy! (Status: 200)"
+                    } else {
+                        error("❌ Health check failed! Received HTTP Status: ${statusCode}. App might be down.")
+                    }
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 echo "Fetching branch: ${params.branch}..."
@@ -76,13 +92,10 @@ pipeline {
             steps {
                 script {
                     echo "--- Checking Outbound Network & DNS ---"
-                    // The || true ensures that if curl fails, it prints the warning but doesn't immediately crash the build
                     sh "curl -I https://viktorvakareev.github.io || echo 'WARNING: Cannot reach GitHub Pages!'"
 
-                    // 1. Verify ReportPortal configuration (Path updated to src/)
                     sh "ls -la src/bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
                     
-                    // 2. Setup dynamic filtering based on your parameters
                     def filterFlag = params.TEST_FILTER ? "--filter \"${params.TEST_FILTER}\"" : ""
                     
                     echo "====================================================="
@@ -91,7 +104,6 @@ pipeline {
                     echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
                     echo "====================================================="
                     
-                    // 3. Execute the test suite directly against the src folder
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
                         dotnet test src/ \
@@ -105,6 +117,7 @@ pipeline {
                 }
             }
         }
+    } // <-- The previously missing bracket
 
     post {
         always {
