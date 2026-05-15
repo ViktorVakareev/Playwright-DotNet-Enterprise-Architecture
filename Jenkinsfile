@@ -58,12 +58,13 @@ pipeline {
                 dotnet restore src/
                 dotnet build src/ --configuration Release --no-restore
                 
-                echo "--- Installing Browser Binaries (Direct DLL Execution) ---"
-                # Bypass NuGet, bypass missing bash scripts, and command the engine directly!
-                dotnet exec src/bin/Release/net10.0/Microsoft.Playwright.dll install chromium
+                echo "--- Installing PowerShell Core (pwsh) ---"
+                # Playwright strictly requires pwsh to run its native setup scripts
+                dotnet tool update --global PowerShell
                 
-                # Optional: If you ever get missing OS dependency errors in the future, uncomment the line below:
-                # dotnet exec src/bin/Release/net10.0/Microsoft.Playwright.dll install-deps chromium
+                echo "--- Installing Browser Binaries (Official API) ---"
+                # Execute the officially generated PowerShell script
+                pwsh src/bin/Release/net10.0/playwright.ps1 install chromium
                 '''
             }
         }
