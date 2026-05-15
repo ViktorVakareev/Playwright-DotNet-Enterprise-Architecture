@@ -75,8 +75,12 @@ pipeline {
             }
             steps {
                 script {
-                    // 1. Verify ReportPortal configuration
-                    sh "ls -la bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
+                    echo "--- Checking Outbound Network & DNS ---"
+                    // The || true ensures that if curl fails, it prints the warning but doesn't immediately crash the build
+                    sh "curl -I https://viktorvakareev.github.io || echo 'WARNING: Cannot reach GitHub Pages!'"
+
+                    // 1. Verify ReportPortal configuration (Path updated to src/)
+                    sh "ls -la src/bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
                     
                     // 2. Setup dynamic filtering based on your parameters
                     def filterFlag = params.TEST_FILTER ? "--filter \"${params.TEST_FILTER}\"" : ""
@@ -87,11 +91,10 @@ pipeline {
                     echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
                     echo "====================================================="
                     
-                    // 3. Execute the test suite directly against GitHub Pages
+                    // 3. Execute the test suite directly against the src folder
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
-                        SLN_FILE=\$(find . -name "*.sln" | head -n 1)
-                        dotnet test "\$SLN_FILE" \
+                        dotnet test src/ \
                             --configuration Release \
                             --no-build \
                             ${filterFlag} \
@@ -102,7 +105,6 @@ pipeline {
                 }
             }
         }
-    }
 
     post {
         always {

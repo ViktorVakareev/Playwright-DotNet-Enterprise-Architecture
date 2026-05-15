@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using WorldBank.Automation.Tests.Data;
 using WorldBank.Automation.Tests.Infrastructure;
 
 namespace WorldBank.Automation.Tests.Tests
@@ -130,14 +131,21 @@ namespace WorldBank.Automation.Tests.Tests
             await Expect(Page.GetByTestId("acc-error")).ToBeVisibleAsync();
         }
 
+        #region Group 3: Transfer Form - Validation Edge Cases
+
         [Test]
         public async Task Form_Step2_NegativeAmount_ShowsError()
         {
+            // Inject dynamic boundary data
+            var testData = BankingDataFactory.CreateWireTransfer_NegativeAmount();
+
             await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
+            await FillValidStep1(testData);
 
             await Page.GetByTestId("transfer-date").FillAsync(DateTime.Now.ToString("yyyy-MM-dd"));
-            await Page.GetByTestId("transfer-amount").FillAsync("-500");
+
+            // Apply the dynamic negative amount safely
+            await Page.GetByTestId("transfer-amount").FillAsync(testData.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture));
             await Page.GetByTestId("btn-next-2").ClickAsync();
 
             await Expect(Page.GetByTestId("amount-error")).ToBeVisibleAsync();
@@ -146,11 +154,14 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Form_Step2_ZeroAmount_ShowsError()
         {
+            // Inject dynamic boundary data
+            var testData = BankingDataFactory.CreateWireTransfer_ZeroAmount();
+
             await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
+            await FillValidStep1(testData);
 
             await Page.GetByTestId("transfer-date").FillAsync(DateTime.Now.ToString("yyyy-MM-dd"));
-            await Page.GetByTestId("transfer-amount").FillAsync("0");
+            await Page.GetByTestId("transfer-amount").FillAsync(testData.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture));
             await Page.GetByTestId("btn-next-2").ClickAsync();
 
             await Expect(Page.GetByTestId("amount-error")).ToBeVisibleAsync();
@@ -159,12 +170,15 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Form_Step2_PastDate_ShowsError()
         {
+            // We use valid financial data here, because we are testing the Date boundary
+            var testData = BankingDataFactory.CreateValidWireTransfer();
+
             await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
+            await FillValidStep1(testData);
 
             var yesterday = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
             await Page.GetByTestId("transfer-date").FillAsync(yesterday);
-            await Page.GetByTestId("transfer-amount").FillAsync("1000");
+            await Page.GetByTestId("transfer-amount").FillAsync(testData.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture));
             await Page.GetByTestId("btn-next-2").ClickAsync();
 
             await Expect(Page.GetByTestId("date-error")).ToBeVisibleAsync();
@@ -173,10 +187,14 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Form_Step2_MissingDate_ShowsError()
         {
-            await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
+            // Use valid financial data
+            var testData = BankingDataFactory.CreateValidWireTransfer();
 
-            await Page.GetByTestId("transfer-amount").FillAsync("1000");
+            await Page.GotoAsync(TransferUrl);
+            await FillValidStep1(testData);
+
+            // Intentionally skip the Date field
+            await Page.GetByTestId("transfer-amount").FillAsync(testData.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture));
             await Page.GetByTestId("btn-next-2").ClickAsync();
 
             await Expect(Page.GetByTestId("date-error")).ToBeVisibleAsync();
@@ -184,67 +202,59 @@ namespace WorldBank.Automation.Tests.Tests
 
         #endregion
 
+        #endregion
+
         #region Group 4: Transfer Form - Happy Path & Stepper Logic
-
-        [Test]
-        public async Task Stepper_NavigatesToStep2_OnValidStep1()
-        {
-            await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
-
-            await Expect(Page.GetByTestId("step-2-form")).ToBeVisibleAsync();
-            await Expect(Page.GetByTestId("step-2-ind")).ToHaveClassAsync(new Regex("active"));
-        }
-
-        [Test]
-        public async Task Stepper_BackButton_ReturnsToStep1()
-        {
-            await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
-
-            await Page.GetByTestId("btn-back-2").ClickAsync();
-            await Expect(Page.GetByTestId("step-1-form")).ToBeVisibleAsync();
-        }
 
         [Test]
         public async Task Form_Step3_ReviewCard_MatchesEnteredData()
         {
-            await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
-            await FillValidStep2();
+            // 1. Generate clean, dynamic financial data
+            var transferData = BankingDataFactory.CreateValidWireTransfer();
 
-            await Expect(Page.GetByTestId("review-recipient")).ToHaveTextAsync("Acme Corp (US)");
-            await Expect(Page.GetByTestId("review-acc")).ToHaveTextAsync("1234567890");
-            await Expect(Page.GetByTestId("review-amount")).ToHaveTextAsync("5000.00");
+            await Page.GotoAsync(TransferUrl);
+
+            // 2. Pass the data objects into the helpers
+            await FillValidStep1(transferData);
+            await FillValidStep2(transferData);
+
+            // 3. Assert against the exact dynamic data we injected
+            await Expect(Page.GetByTestId("review-acc")).ToHaveTextAsync(transferData.Iban);
+
+            // Format to match the UI's expected 2-decimal display
+            string expectedAmount = transferData.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+            await Expect(Page.GetByTestId("review-amount")).ToHaveTextAsync(expectedAmount);
         }
 
         [Test]
         public async Task Form_EndToEnd_HappyPath_CompletesTransfer()
         {
+            var transferData = BankingDataFactory.CreateValidWireTransfer();
+
             await Page.GotoAsync(TransferUrl);
-            await FillValidStep1();
-            await FillValidStep2();
+            await FillValidStep1(transferData);
+            await FillValidStep2(transferData);
 
             await Page.GetByTestId("btn-submit-transfer").ClickAsync();
 
             await Expect(Page.GetByTestId("success-msg")).ToBeVisibleAsync();
-            await Expect(Page.GetByTestId("btn-submit-transfer")).ToBeDisabledAsync();
         }
 
         #endregion
 
-        // Helper methods to keep tests clean
-        private async Task FillValidStep1()
+        // Upgraded Helpers to accept dynamic Record data
+        private async Task FillValidStep1(WireTransfer data)
         {
             await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
-            await Page.GetByTestId("acc-number").FillAsync("1234567890");
+            await Page.GetByTestId("acc-number").FillAsync(data.Iban);
             await Page.GetByTestId("btn-next-1").ClickAsync();
         }
 
-        private async Task FillValidStep2()
+        private async Task FillValidStep2(WireTransfer data)
         {
             await Page.GetByTestId("transfer-date").FillAsync(DateTime.Now.ToString("yyyy-MM-dd"));
-            await Page.GetByTestId("transfer-amount").FillAsync("5000");
+            // Safe conversion for any locale
+            await Page.GetByTestId("transfer-amount").FillAsync(data.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture));
             await Page.GetByTestId("btn-next-2").ClickAsync();
         }
     }

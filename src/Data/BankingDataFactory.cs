@@ -73,5 +73,14 @@ namespace WorldBank.Automation.Tests.Data
             var validData = ValidKycFaker.Generate();
             return validData with { SsnLastFour = "99" }; // Too short
         }
+
+        /// <summary>
+        /// Generates a valid wire transfer, but injects a zero amount.
+        /// </summary>
+        public static WireTransfer CreateWireTransfer_ZeroAmount()
+        {
+            var validData = ValidWireTransferFaker.Generate();
+            return validData with { Amount = 0.00m };
+        }
     }
 }
