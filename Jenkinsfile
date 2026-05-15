@@ -54,19 +54,18 @@ pipeline {
             }
             steps {
                 sh '''
-                SLN_FILE=$(find . -name "*.sln" | head -n 1)
-                
                 echo "--- Restoring and Building ---"
-                dotnet restore "$SLN_FILE"
-                dotnet build "$SLN_FILE" --configuration Release --no-restore
+                # Target the src directory explicitly where the csproj lives
+                dotnet restore src/
+                dotnet build src/ --configuration Release --no-restore
                 
                 echo "--- Installing Playwright CLI Tool ---"
                 dotnet new tool-manifest --force
                 dotnet tool install Microsoft.Playwright.CLI
                 
                 echo "--- Installing Browser Binaries ---"
-                # FIX: We use the -p flag to tell Playwright exactly where the solution/project is!
-                dotnet tool run playwright install chromium -p "$SLN_FILE"
+                # Point the installer directly to the C# project directory 
+                dotnet tool run playwright install chromium -p src/
                 '''
             }
         }
