@@ -63,5 +63,15 @@ namespace WorldBank.Automation.Tests.Data
             var validData = ValidUserFaker.Generate();
             return validData with { Username = "<script>alert('Hacked')</script>admin@worldbank.internal" };
         }
+
+        /// <summary>
+        /// Generates a user with an excessively long name to test UI buffer or boundary rendering.
+        /// </summary>
+        public static UserProfile CreateUser_ExtremeNameLength()
+        {
+            var validData = ValidUserFaker.Generate();
+            var longName = new string('A', 255);
+            return validData with { Username = longName, Email = $"{longName}@worldbank.internal" };
+        }
     }
 }

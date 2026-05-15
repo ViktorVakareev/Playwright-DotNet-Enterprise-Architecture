@@ -82,5 +82,32 @@ namespace WorldBank.Automation.Tests.Data
             var validData = ValidWireTransferFaker.Generate();
             return validData with { Amount = 0.00m };
         }
+
+        /// <summary>
+        /// Generates an astronomical wire transfer amount to trigger anti-money laundering (AML) tier compliance.
+        /// </summary>
+        public static WireTransfer CreateWireTransfer_AmlThresholdExceeded()
+        {
+            var validData = ValidWireTransferFaker.Generate();
+            return validData with { Amount = 5000000.00m }; // $5M triggers high-risk AML flow
+        }
+
+        /// <summary>
+        /// Generates a transfer object with an completely malformed, non-standard IBAN pattern.
+        /// </summary>
+        public static WireTransfer CreateWireTransfer_MalformedIban()
+        {
+            var validData = ValidWireTransferFaker.Generate();
+            return validData with { Iban = "INVALID_IBAN_CHARS_12345!!!" };
+        }
+
+        /// <summary>
+        /// Generates a transfer object with an invalid, non-standard SWIFT/BIC code format length.
+        /// </summary>
+        public static WireTransfer CreateWireTransfer_InvalidSwiftFormat()
+        {
+            var validData = ValidWireTransferFaker.Generate();
+            return validData with { SwiftCode = "BADSWIFT" }; // Too short / wrong format
+        }
     }
 }
