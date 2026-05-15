@@ -17,7 +17,6 @@ pipeline {
         booleanParam(name: 'usePrebuilt', defaultValue: false, description: 'Skip build step (main branch only)')
         string(name: 'qTestFolderUrl', defaultValue: '', description: 'qTest Folder Url')
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
-        // App URL parameter restored for the Health Check
         string(name: 'APP_URL', defaultValue: 'http://host.docker.internal:8081', description: 'Base URL of the application to test')
     }
 
@@ -33,15 +32,13 @@ pipeline {
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
     }
 
-    stage('Execute Health Check') {
+    stages {
+        stage('Execute Health Check') {
             steps {
                 script {
-                    // Construct the real URL based on the selected target environment
                     def targetUrl = "https://viktorvakareev.github.io/Playwright-DotNet-Enterprise-Architecture/WorldBankMockApp/${params.TARGET_ENV}/"
-                    
                     echo "Pinging Health Check Endpoint at: ${targetUrl}"
                     
-                    // Use curl with -L to follow any potential GitHub Pages redirects
                     def statusCode = sh(
                         script: "curl -s -L -o /dev/null -w \"%{http_code}\" ${targetUrl} || echo '000'", 
                         returnStdout: true
@@ -77,11 +74,9 @@ pipeline {
                 dotnet build src/ --configuration Release --no-restore
                 
                 echo "--- Installing PowerShell Core (pwsh) ---"
-                # Playwright strictly requires pwsh to run its native setup scripts
                 dotnet tool update --global PowerShell
                 
                 echo "--- Installing Browser Binaries (Official API) ---"
-                # Execute the officially generated PowerShell script
                 pwsh src/bin/Release/net10.0/playwright.ps1 install chromium
                 '''
             }
@@ -119,7 +114,7 @@ pipeline {
                 }
             }
         }
-    } // <-- The previously missing bracket
+    }
 
     post {
         always {
@@ -138,4 +133,4 @@ pipeline {
             }
         }
     }
-} // End of Pipeline
+}
