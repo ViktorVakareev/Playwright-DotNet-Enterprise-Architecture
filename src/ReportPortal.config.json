@@ -1,7 +1,9 @@
 {
+  "Enabled": false,
   "Server": {
     "Url": "http://host.docker.internal:8085/api/v1",
-    "Project": "worldbank_core"
+    "Project": "worldbank_core",
+    "ApiKey": "local-bypass-key"
   },
   "Launch": {
     "Name": "Jenkins Enterprise Run",

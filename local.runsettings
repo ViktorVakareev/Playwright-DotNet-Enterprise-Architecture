@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <SlowMo>500</SlowMo>
+      <Args>
+        <string>--start-fullscreen</string>
+      </Args>
+    </LaunchOptions>
+    <ContextOptions>
+      <ViewportSize>NoViewport</ViewportSize>
+    </ContextOptions>
+  </Playwright>
+</RunSettings>
