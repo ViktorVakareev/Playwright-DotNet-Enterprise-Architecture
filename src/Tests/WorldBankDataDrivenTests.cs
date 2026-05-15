@@ -1,23 +1,27 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Playwright;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
+﻿using System.Globalization;
+using WorldBank.Automation.Tests.Infrastructure;
 
-namespace WorldBank.Automation.Tests
+namespace WorldBank.Automation.Tests.Tests
 {
     [TestFixture]
     // ParallelScope.All tells NUnit to run every single [TestCase] simultaneously!
     [Parallelizable(ParallelScope.All)]
-    public class WorldBankDataDrivenTests : PageTest
+    [Category("Transfers")]
+    [Category("DataDriven")]
+    public class WorldBankDataDrivenTests : AiTriage // Inherits AI capabilities and Context initialization
     {
-        private readonly string _transferUrl = "http://localhost:8081/transfer.html";
+        [SetUp]
+        public async Task NavigateToTransferPage()
+        {
+            // Dynamically route using the centralized AppConfig
+            string transferUrl = $"{AppConfig.GetBaseUrl()}/transfer.html";
+            await Page.GotoAsync(transferUrl);
+        }
 
         // =========================================================================
         // SCENARIO 1: STEP 1 ACCOUNT & RECIPIENT VALIDATIONS
         // =========================================================================
 
-        // --- THE DATA ---
         // --- THE DATA ---
         [TestCase("acme", "1234567890", true, "", TestName = "Valid Account - US Recipient")]
         [TestCase("global", "0987654321", true, "", TestName = "Valid Account - UK Recipient")]
@@ -25,12 +29,8 @@ namespace WorldBank.Automation.Tests
         [TestCase("acme", "123", false, "acc-error", TestName = "Error - Account Too Short")]
         [TestCase("global", "", false, "acc-error", TestName = "Error - Missing Account")]
         [TestCase("acme", "ABCDEFGHIJ", false, "acc-error", TestName = "Error - Letters Instead of Numbers")]
-
-        // --- THE LOGIC ---
         public async Task Transfer_Step1_DataDrivenValidations(string recipient, string account, bool expectedSuccess, string errorTestId)
         {
-            await Page.GotoAsync(_transferUrl);
-
             // 1. Fill the form using the provided data
             if (!string.IsNullOrEmpty(recipient))
             {
@@ -51,7 +51,9 @@ namespace WorldBank.Automation.Tests
             {
                 // If invalid, Step 1 should stay visible and the specific error should appear
                 await Expect(Page.GetByTestId(errorTestId)).ToBeVisibleAsync();
-                await Expect(Page.GetByTestId("step-2-form")).Not.ToBeVisibleAsync();
+
+                // Idiomatic Playwright: Use ToBeHiddenAsync() instead of Not.ToBeVisibleAsync()
+                await Expect(Page.GetByTestId("step-2-form")).ToBeHiddenAsync();
             }
         }
 
@@ -61,19 +63,14 @@ namespace WorldBank.Automation.Tests
         // =========================================================================
 
         // --- THE DATA --- (daysOffset: 0 = today, 1 = tomorrow, -1 = yesterday)
-        // --- THE DATA --- (daysOffset: 0 = today, 1 = tomorrow, -1 = yesterday)
         [TestCase("500", 0, true, "", TestName = "Valid Financials - Today")]
         [TestCase("10000.50", 5, true, "", TestName = "Valid Financials - Future Date")]
         [TestCase("0", 0, false, "amount-error", TestName = "Error - Zero Amount")]
         [TestCase("-50", 1, false, "amount-error", TestName = "Error - Negative Amount")]
         [TestCase("100", -1, false, "date-error", TestName = "Error - Past Date")]
         [TestCase("", 0, false, "amount-error", TestName = "Error - Missing Amount")]
-
-        // --- THE LOGIC ---
         public async Task Transfer_Step2_DataDrivenValidations(string amount, int daysOffset, bool expectedSuccess, string errorTestId)
         {
-            await Page.GotoAsync(_transferUrl);
-
             // Setup: Quickly bypass Step 1 with valid static data
             await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
             await Page.GetByTestId("acc-number").FillAsync("1234567890");
@@ -94,13 +91,15 @@ namespace WorldBank.Automation.Tests
             {
                 await Expect(Page.GetByTestId("step-3-form")).ToBeVisibleAsync();
 
-                // Extra assertion: Verify the amount formatted correctly on the review screen!
-                await Expect(Page.GetByTestId("review-amount")).ToHaveTextAsync(decimal.Parse(amount).ToString("F2"));
+                // Extra assertion: Verify the amount formatted correctly on the review screen
+                // Added CultureInfo.InvariantCulture to guarantee safety on headless Linux agents
+                string expectedFormattedAmount = decimal.Parse(amount, CultureInfo.InvariantCulture).ToString("F2", CultureInfo.InvariantCulture);
+                await Expect(Page.GetByTestId("review-amount")).ToHaveTextAsync(expectedFormattedAmount);
             }
             else
             {
                 await Expect(Page.GetByTestId(errorTestId)).ToBeVisibleAsync();
-                await Expect(Page.GetByTestId("step-3-form")).Not.ToBeVisibleAsync();
+                await Expect(Page.GetByTestId("step-3-form")).ToBeHiddenAsync();
             }
         }
     }
