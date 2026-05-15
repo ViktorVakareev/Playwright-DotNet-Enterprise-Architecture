@@ -58,16 +58,12 @@ pipeline {
                 dotnet restore src/
                 dotnet build src/ --configuration Release --no-restore
                 
-                echo "--- Installing Playwright CLI Tool (Version Sync) ---"
-                dotnet new tool-manifest --force
+                echo "--- Installing Browser Binaries (Native Embedded CLI) ---"
+                # 1. Give execution permissions to the generated Linux script
+                chmod +x src/bin/Release/net10.0/playwright.sh
                 
-                # FORCE the CLI tool to match your project's version exactly
-                dotnet tool install Microsoft.Playwright.CLI --version 1.59.0
-                
-                echo "--- Installing Browser Binaries ---"
-                # Step inside the source directory to run the installation in context
-                cd src/
-                dotnet tool run playwright install chromium
+                # 2. Run the embedded installer! 
+                src/bin/Release/net10.0/playwright.sh install chromium
                 '''
             }
         }
