@@ -55,17 +55,19 @@ pipeline {
             steps {
                 sh '''
                 echo "--- Restoring and Building ---"
-                # Target the src directory explicitly where the csproj lives
                 dotnet restore src/
                 dotnet build src/ --configuration Release --no-restore
                 
-                echo "--- Installing Playwright CLI Tool ---"
+                echo "--- Installing Playwright CLI Tool (Version Sync) ---"
                 dotnet new tool-manifest --force
-                dotnet tool install Microsoft.Playwright.CLI
+                
+                # FORCE the CLI tool to match your project's version exactly
+                dotnet tool install Microsoft.Playwright.CLI --version 1.59.0
                 
                 echo "--- Installing Browser Binaries ---"
-                # Point the installer directly to the C# project directory 
-                dotnet tool run playwright install chromium -p src/
+                # Step inside the source directory to run the installation in context
+                cd src/
+                dotnet tool run playwright install chromium
                 '''
             }
         }
