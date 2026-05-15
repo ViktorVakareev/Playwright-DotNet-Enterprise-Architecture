@@ -65,9 +65,8 @@ pipeline {
                 dotnet tool install Microsoft.Playwright.CLI
                 
                 echo "--- Installing Browser Binaries ---"
-                # We remove --with-deps to avoid the "su: Authentication failure"
-                # This assumes the OS already has the required libraries.
-                dotnet tool run playwright install chromium
+                # FIX: We use the -p flag to tell Playwright exactly where the solution/project is!
+                dotnet tool run playwright install chromium -p "$SLN_FILE"
                 '''
             }
         }
