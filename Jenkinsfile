@@ -33,22 +33,24 @@ pipeline {
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
     }
 
-    stages {
-        stage('Execute Health Check') {
+    stage('Execute Health Check') {
             steps {
                 script {
-                    echo "Pinging Health Check Endpoint at: ${params.APP_URL}/monitor/health"
+                    // Construct the real URL based on the selected target environment
+                    def targetUrl = "https://viktorvakareev.github.io/Playwright-DotNet-Enterprise-Architecture/WorldBankMockApp/${params.TARGET_ENV}/"
                     
-                    // Use curl to extract just the HTTP status code
+                    echo "Pinging Health Check Endpoint at: ${targetUrl}"
+                    
+                    // Use curl with -L to follow any potential GitHub Pages redirects
                     def statusCode = sh(
-                        script: "curl -s -o /dev/null -w \"%{http_code}\" ${params.APP_URL}/monitor/health || echo '000'", 
+                        script: "curl -s -L -o /dev/null -w \"%{http_code}\" ${targetUrl} || echo '000'", 
                         returnStdout: true
                     ).trim()
                     
                     if (statusCode == "200") {
                         echo "✅ App is UP and Healthy! (Status: 200)"
                     } else {
-                        error("❌ Health check failed! Received HTTP Status: ${statusCode}. App might be down.")
+                        error("❌ Health check failed! Received HTTP Status: ${statusCode} for ${targetUrl}")
                     }
                 }
             }
