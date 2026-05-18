@@ -15,23 +15,29 @@ namespace WorldBank.Automation.Tests.Data
         // =====================================================================
 
         private static readonly Faker<WireTransfer> ValidWireTransferFaker = new Faker<WireTransfer>("en")
-            .RuleFor(w => w.Amount, f => Math.Round(f.Finance.Amount(100, 50000), 2)) // Lock to 2 decimals
-            .RuleFor(w => w.Currency, f => f.Finance.Currency().Code)
-            .RuleFor(w => w.BeneficiaryName, f => f.Name.FullName())
-            .RuleFor(w => w.Iban, f => f.Finance.Iban())
-            .RuleFor(w => w.SwiftCode, f => f.Finance.Bic())
-            .RuleFor(w => w.PurposeOfTransfer, f => f.Commerce.ProductName());
+    .CustomInstantiator(f => new WireTransfer(
+        Math.Round(f.Finance.Amount(100, 50000), 2),
+        f.Finance.Currency().Code,
+        f.Name.FullName(),
+        f.Finance.Iban(),
+        f.Finance.Bic(),
+        f.Commerce.ProductName()
+    ));
 
         private static readonly Faker<KycProfile> ValidKycFaker = new Faker<KycProfile>("en")
-            .RuleFor(k => k.SsnLastFour, f => f.Random.Number(1000, 9999).ToString())
-            .RuleFor(k => k.EmploymentStatus, f => f.PickRandom("Employed", "Self-Employed", "Retired"))
-            .RuleFor(k => k.AnnualIncome, f => Math.Round(f.Finance.Amount(40000, 250000), 2))
-            .RuleFor(k => k.PassportNumber, f => f.Random.AlphaNumeric(9).ToUpper());
+            .CustomInstantiator(f => new KycProfile(
+                f.Random.Number(1000, 9999).ToString(),
+                f.PickRandom("Employed", "Self-Employed", "Retired"),
+                Math.Round(f.Finance.Amount(40000, 250000), 2),
+                f.Random.AlphaNumeric(9).ToUpper()
+            ));
 
         private static readonly Faker<LoanApplication> ValidLoanFaker = new Faker<LoanApplication>("en")
-            .RuleFor(l => l.LoanType, f => f.PickRandom("Mortgage", "Auto", "Personal"))
-            .RuleFor(l => l.RequestedAmount, f => Math.Round(f.Finance.Amount(10000, 500000), 2))
-            .RuleFor(l => l.TermMonths, f => f.PickRandom(12, 24, 36, 60, 120, 360));
+            .CustomInstantiator(f => new LoanApplication(
+                f.PickRandom("Mortgage", "Auto", "Personal"),
+                Math.Round(f.Finance.Amount(10000, 500000), 2),
+                f.PickRandom(12, 24, 36, 60, 120, 360)
+            ));
 
 
         // =====================================================================

@@ -11,15 +11,20 @@ namespace WorldBank.Automation.Tests.Data
         // CACHED FAKER DEFINITIONS (Performance Optimization & CI/CD Stability)
         // =====================================================================
 
-        // Locking to the "en" locale ensures predictable character sets across Linux/Windows Jenkins agents
         private static readonly Faker<UserProfile> ValidUserFaker = new Faker<UserProfile>("en")
-            .RuleFor(u => u.Id, f => $"WB-{f.Random.Number(1000, 9999)}")
-            .RuleFor(u => u.Username, f => f.Internet.UserName())
-            // Notice how Email dynamically uses the generated Username to maintain realistic data consistency!
-            .RuleFor(u => u.Email, (f, u) => $"{u.Username}@worldbank.internal".ToLower())
-            .RuleFor(u => u.Password, f => f.Internet.Password(12, false, "", "Valid123!")) // Guarantees password complexity rules pass
-            .RuleFor(u => u.Role, f => "Standard");
+            .CustomInstantiator(f =>
+            {
+                // Capture the username locally so Email can dynamically inherit it
+                var username = f.Internet.UserName();
 
+                return new UserProfile(
+                    Id: $"WB-{f.Random.Number(1000, 9999)}",
+                    Username: username,
+                    Email: $"{username}@worldbank.internal".ToLower(),
+                    Password: f.Internet.Password(12, false, "", "Valid123!"),
+                    Role: "Standard"
+                );
+            });
 
         // =====================================================================
         // HAPPY PATH GENERATORS

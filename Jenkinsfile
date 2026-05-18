@@ -107,7 +107,7 @@ pipeline {
                             --configuration Release \
                             --no-build \
                             ${filterFlag} \
-                            --logger "trx;LogFileName=TestResults.trx" \
+                            --logger 'trx;LogFileName=TestResults.trx' \
                             --results-directory ./TestResults
                         """
                     }

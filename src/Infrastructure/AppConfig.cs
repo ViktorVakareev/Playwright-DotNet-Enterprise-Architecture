@@ -10,7 +10,7 @@ namespace WorldBank.Automation.Tests.Infrastructure
             // 2. If it's null (e.g., running locally in Visual Studio), default to "test"
             string targetEnv = Environment.GetEnvironmentVariable("TARGET_ENV") ?? "test";
             var baseUrl = new Uri("https://viktorvakareev.github.io/Playwright-DotNet-Enterprise-Architecture/WorldBankMockApp/");
-            var finalUrl = new Uri(baseUrl, $"{targetEnv}/").ToString();
+            var finalUrl = new Uri(baseUrl, $"{targetEnv}").ToString();
 
             // 3. Construct the dynamic GitHub Pages URL
             return finalUrl;
