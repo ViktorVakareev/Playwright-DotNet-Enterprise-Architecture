@@ -18,7 +18,7 @@ namespace WorldBank.Automation.Tests.Tests
             string dashboardUrl = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
 
             // We load the dashboard directly, simulating a standard user session
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await AuthenticateAndNavigateAsync(dashboardUrl);
         }
 
         // 1. Core Page Verification
