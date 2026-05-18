@@ -108,7 +108,8 @@ pipeline {
                             --no-build \
                             ${filterFlag} \
                             --logger 'trx;LogFileName=TestResults.trx' \
-                            --results-directory ./TestResults
+                            --results-directory ./TestResults \
+                            -- NUnit.NumberOfTestWorkers=4
                         """
                     }
                 }
