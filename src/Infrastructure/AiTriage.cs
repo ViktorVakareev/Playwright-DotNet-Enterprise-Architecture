@@ -57,7 +57,7 @@ public class AiTriage : PageTest
     protected async Task AuthenticateAndNavigateAsync(string targetSecureUrl)
     {
         var sessionUser = DataFactory.CreateValidUser();
-        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
+        await AuthenticateAndNavigateAsync($"{AppConfig.GetBaseUrl()}/login.html");
 
         await Page.GetByPlaceholder("Username").FillAsync(sessionUser.Username);
         await Page.GetByPlaceholder("Password").FillAsync(sessionUser.Password);
@@ -69,7 +69,7 @@ public class AiTriage : PageTest
 
         if (!Page.Url.Contains(targetSecureUrl))
         {
-            await Page.GotoAsync(targetSecureUrl);
+            await AuthenticateAndNavigateAsync(targetSecureUrl);
         }
     }
 

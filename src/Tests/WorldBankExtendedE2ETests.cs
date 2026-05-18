@@ -158,7 +158,7 @@ namespace WorldBank.Automation.Tests.Tests
             // Arrange - Retrieves massive generated 255-character string
             var edgeUser = DataFactory.CreateUser_ExtremeNameLength();
 
-            await Page.GotoAsync(LoginUrl);
+            await AuthenticateAndNavigateAsync(LoginUrl);
 
             // Act - Inject data into inputs to verify layouts hold bounding wrappers
             await Page.GetByPlaceholder("Username").FillAsync(edgeUser.Username);
@@ -211,7 +211,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Arrange
             var user = DataFactory.CreateValidUser();
-            await Page.GotoAsync(LoginUrl);
+            await AuthenticateAndNavigateAsync(LoginUrl);
 
             await Page.GetByPlaceholder("Username").FillAsync(user.Username);
             await Page.GetByPlaceholder("Password").FillAsync(user.Password);

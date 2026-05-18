@@ -26,7 +26,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Dynamically construct the URL
             string url = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-            await Page.GotoAsync(url);
+            await AuthenticateAndNavigateAsync(url);
 
             // Wait for a core element to render to guarantee the DOM is painted before snapping
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
@@ -39,7 +39,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task Dashboard_DarkMode_ShouldRenderCorrectly()
         {
             string url = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-            await Page.GotoAsync(url);
+            await AuthenticateAndNavigateAsync(url);
 
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
 
@@ -52,7 +52,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task Dashboard_NotificationModal_ShouldOverlayCorrectly()
         {
             string url = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-            await Page.GotoAsync(url);
+            await AuthenticateAndNavigateAsync(url);
 
             await Page.Locator("#btn-notifications").ClickAsync();
 
@@ -72,7 +72,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Note: Update this to the exact mock URL if transfer is handled inside the dashboard
             string url = $"{AppConfig.GetBaseUrl()}/transfer.html";
-            await Page.GotoAsync(url);
+            await AuthenticateAndNavigateAsync(url);
 
             // Ensure the form is painted
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Initiate Wire Transfer" })).ToBeVisibleAsync();
@@ -84,7 +84,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task WireTransfer_Step2_ShouldRenderCorrectly()
         {
             string url = $"{AppConfig.GetBaseUrl()}/transfer.html";
-            await Page.GotoAsync(url);
+            await AuthenticateAndNavigateAsync(url);
 
             // Swap fragile text selector for a robust ARIA role locator
             await Page.GetByRole(AriaRole.Button, new() { Name = "Next Step" }).ClickAsync();

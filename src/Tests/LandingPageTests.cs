@@ -16,7 +16,7 @@ namespace WorldBank.Automation.Tests.Tests
             string homeUrl = $"{AppConfig.GetBaseUrl()}/index.html";
 
             // Navigate directly to the environment-specific home page
-            await Page.GotoAsync(homeUrl);
+            await AuthenticateAndNavigateAsync(homeUrl);
         }
 
         // 1. Updated Original Test (Happy Path Data Search)

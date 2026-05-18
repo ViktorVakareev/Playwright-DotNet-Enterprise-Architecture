@@ -116,7 +116,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Override the setup routing for this specific test using the dynamic configuration
             string adminUrl = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=admin";
-            await Page.GotoAsync(adminUrl);
+            await AuthenticateAndNavigateAsync(adminUrl);
 
             var adminPanel = Page.Locator("#admin-controls");
 

@@ -15,7 +15,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Dynamically construct the URL based on the target environment
             string loginUrl = $"{AppConfig.GetBaseUrl()}/login.html";
-            await Page.GotoAsync(loginUrl);
+            await AuthenticateAndNavigateAsync(loginUrl);
         }    
 
         // 1. Standard Happy Path
