@@ -15,7 +15,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Dynamically route using the centralized AppConfig
             string transferUrl = $"{AppConfig.GetBaseUrl()}/transfer.html";
-            await Page.GotoAsync(transferUrl);
+            await AuthenticateAndNavigateAsync(TransferUrl);
         }
 
         // =========================================================================

@@ -6,6 +6,7 @@ using System.IO;
 using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
+using WorldBank.Automation.Tests.Data;
 
 namespace WorldBank.Automation.Tests.Infrastructure;
 
@@ -51,6 +52,28 @@ public class AiTriage : PageTest
         options.IgnoreHTTPSErrors = true;
 
         return options;
+    }
+        protected async Task AuthenticateAndNavigateAsync(string targetSecureUrl)
+    {
+        // 1. Generate a valid session user
+        var sessionUser = DataFactory.CreateValidUser();
+
+        // 2. Navigate to the Auth Gateway
+        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
+
+        // 3. Perform the UI Login
+        await Page.GetByPlaceholder("Username").FillAsync(sessionUser.Username);
+        await Page.GetByPlaceholder("Password").FillAsync(sessionUser.Password);
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
+
+        // 4. Wait for the secure routing to finish authenticating
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
+
+        // 5. If the test needs a specific page (like Wire Transfer), navigate there NOW that we have a session token
+        if (!Page.Url.Contains(targetSecureUrl))
+        {
+            await Page.GotoAsync(targetSecureUrl);
+        }
     }
 
     [TearDown]
