@@ -12,19 +12,16 @@ namespace WorldBank.Automation.Tests.Data
         // =====================================================================
 
         private static readonly Faker<UserProfile> ValidUserFaker = new Faker<UserProfile>("en")
-            .CustomInstantiator(f =>
-            {
-                // Capture the username locally so Email can dynamically inherit it
-                var username = f.Internet.UserName();
-
-                return new UserProfile(
-                    Id: $"WB-{f.Random.Number(1000, 9999)}",
-                    Username: username,
-                    Email: $"{username}@worldbank.internal".ToLower(),
-                    Password: f.Internet.Password(12, false, "", "Valid123!"),
-                    Role: "Standard"
-                );
-            });
+    .CustomInstantiator(f =>
+    {
+        return new UserProfile(
+            Id: $"WB-{f.Random.Number(1000, 9999)}",
+            Username: "standarduser", // ⚠️ Must exactly match your mock app's expected username
+            Email: "standarduser@worldbank.internal",
+            Password: "password123",  // ⚠️ Must exactly match your mock app's expected password
+            Role: "Standard"
+        );
+    });
 
         // =====================================================================
         // HAPPY PATH GENERATORS

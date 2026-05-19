@@ -59,7 +59,8 @@ public class AiTriage : PageTest
         var sessionUser = DataFactory.CreateValidUser();
 
         // ⚠️ CRITICAL: This must be native Page.GotoAsync
-        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
+        // Inside AiTriage.cs -> AuthenticateAndNavigateAsync()
+        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
 
         await Page.GetByPlaceholder("Username").FillAsync(sessionUser.Username);
         await Page.GetByPlaceholder("Password").FillAsync(sessionUser.Password);

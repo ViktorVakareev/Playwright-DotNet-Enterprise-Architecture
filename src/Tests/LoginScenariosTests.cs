@@ -11,13 +11,12 @@ namespace WorldBank.Automation.Tests.Tests
     public class LoginScenariosTests : AiTriage // Inherits AI capabilities and Context initialization
     {
         [SetUp]
-        public async Task NavigateToLogin()
+        public async Task NavigateToHome()
         {
-            // Dynamically construct the URL based on the target environment
-            string loginUrl = $"{AppConfig.GetBaseUrl()}/login.html";
-
-            await Page.GotoAsync(loginUrl);
-        }    
+            // WaitUntilState.Commit resolves the promise immediately upon network response, 
+            // saving Playwright from crashing when the aggressive JS redirect fires a millisecond later.
+            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/index.html", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+        }
 
         // 1. Standard Happy Path
         [Test]
