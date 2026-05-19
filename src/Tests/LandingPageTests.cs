@@ -15,8 +15,8 @@ namespace WorldBank.Automation.Tests.Tests
             // Dynamically build the URL based on the injected environment variable
             string homeUrl = $"{AppConfig.GetBaseUrl()}/index.html";
 
-            // Navigate directly to the environment-specific home page
-            await AuthenticateAndNavigateAsync(homeUrl);
+			// Navigate directly to the environment-specific home page
+			await Page.GotoAsync(homeUrl);
         }
 
         // 1. Updated Original Test (Happy Path Data Search)
