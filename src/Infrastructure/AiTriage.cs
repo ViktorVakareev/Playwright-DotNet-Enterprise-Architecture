@@ -57,19 +57,20 @@ public class AiTriage : PageTest
     protected async Task AuthenticateAndNavigateAsync(string targetSecureUrl)
     {
         var sessionUser = DataFactory.CreateValidUser();
-        await AuthenticateAndNavigateAsync($"{AppConfig.GetBaseUrl()}/login.html");
+
+        // ⚠️ CRITICAL: This must be native Page.GotoAsync
+        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
 
         await Page.GetByPlaceholder("Username").FillAsync(sessionUser.Username);
         await Page.GetByPlaceholder("Password").FillAsync(sessionUser.Password);
         await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
 
-        // 🏆 BEST PRACTICE: Assert the route change, not the UI copy.
-        // This immediately resolves when the JS router pushes the new URL.
         await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard.*"));
 
         if (!Page.Url.Contains(targetSecureUrl))
         {
-            await AuthenticateAndNavigateAsync(targetSecureUrl);
+            // ⚠️ CRITICAL: This must be native Page.GotoAsync
+            await Page.GotoAsync(targetSecureUrl);
         }
     }
 
