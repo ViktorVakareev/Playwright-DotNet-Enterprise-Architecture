@@ -60,7 +60,7 @@ public class AiTriage : PageTest
 
         // ⚠️ CRITICAL: This must be native Page.GotoAsync
         // Inside AiTriage.cs -> AuthenticateAndNavigateAsync()
-        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
 
         await Page.GetByPlaceholder("Username").FillAsync(sessionUser.Username);
         await Page.GetByPlaceholder("Password").FillAsync(sessionUser.Password);
