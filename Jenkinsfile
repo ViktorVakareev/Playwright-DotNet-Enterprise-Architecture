@@ -17,7 +17,6 @@ pipeline {
         booleanParam(name: 'usePrebuilt', defaultValue: false, description: 'Skip build step (main branch only)')
         string(name: 'qTestFolderUrl', defaultValue: '', description: 'qTest Folder Url')
         booleanParam(name: 'RUN_AI_TRIAGE', defaultValue: true, description: 'Enable local Llama 3 analysis on failure?')
-        string(name: 'TARGET_ENV', defaultValue: 'https://viktorvakareev.github.io/Playwright-DotNet-Enterprise-Architecture/WorldBankMockApp/dev', description: 'Base URL of the application to test')
     }
 
     environment {
