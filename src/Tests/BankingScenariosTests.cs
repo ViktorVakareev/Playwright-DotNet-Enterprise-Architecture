@@ -14,11 +14,11 @@ namespace WorldBank.Automation.Tests.Tests
         [SetUp]
         public async Task SetupNavigation()
         {
-            // Dynamically build the URL based on the injected environment variable
             string dashboardUrl = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
 
-            // We load the dashboard directly, simulating a standard user session
-            await AuthenticateAndNavigateAsync(dashboardUrl);
+            // The browser context is pre-authenticated via AiTriage and GlobalSetup.
+            // We bypass the UI login completely and route directly to the secure URL.
+            await Page.GotoAsync(dashboardUrl);
         }
 
         // 1. Core Page Verification

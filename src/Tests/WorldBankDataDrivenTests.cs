@@ -13,10 +13,12 @@ namespace WorldBank.Automation.Tests.Tests
         [SetUp]
         public async Task NavigateToTransferPage()
         {
-            // Dynamically route using the centralized AppConfig
-            string transferUrl = $"{AppConfig.GetBaseUrl()}/transfer.html";
-            await AuthenticateAndNavigateAsync(transferUrl);
-        }
+           // Dynamically build the URL based on the injected environment variable
+			string transferUrl = $"{AppConfig.GetBaseUrl()}/transfer.html";
+
+			// Navigate directly to the environment-specific home page
+			await Page.GotoAsync(transferUrl);
+		}
 
         // =========================================================================
         // SCENARIO 1: STEP 1 ACCOUNT & RECIPIENT VALIDATIONS

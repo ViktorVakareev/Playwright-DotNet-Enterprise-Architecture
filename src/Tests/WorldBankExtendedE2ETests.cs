@@ -25,10 +25,10 @@ namespace WorldBank.Automation.Tests.Tests
             var transfer = BankingDataFactory.CreateValidWireTransfer();
             string expectedDate = DateTime.Now.ToString("yyyy-MM-dd");
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+			await Page.GotoAsync(TransferUrl);
 
-            // Act - Step 1
-            await Page.GetByTestId("recipient-select").SelectOptionAsync("global");
+			// Act - Step 1
+			await Page.GetByTestId("recipient-select").SelectOptionAsync("global");
             await Page.GetByTestId("acc-number").FillAsync(transfer.Iban);
             await Page.GetByTestId("btn-next-1").ClickAsync();
 
@@ -54,10 +54,10 @@ namespace WorldBank.Automation.Tests.Tests
         {
             var transfer = BankingDataFactory.CreateValidWireTransfer();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+			await Page.GotoAsync(TransferUrl);
 
-            // Fill out Step 1 & Step 2
-            await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
+			// Fill out Step 1 & Step 2
+			await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
             await Page.GetByTestId("acc-number").FillAsync(transfer.Iban);
             await Page.GetByTestId("btn-next-1").ClickAsync();
             await Page.GetByTestId("transfer-date").FillAsync(DateTime.Now.ToString("yyyy-MM-dd"));
@@ -81,9 +81,9 @@ namespace WorldBank.Automation.Tests.Tests
             // Arrange - Generates $5,000,000.00 transfer via factory
             var highRiskTransfer = BankingDataFactory.CreateWireTransfer_AmlThresholdExceeded();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+			await Page.GotoAsync(TransferUrl);
 
-            await Page.GetByTestId("recipient-select").SelectOptionAsync("global");
+			await Page.GetByTestId("recipient-select").SelectOptionAsync("global");
             await Page.GetByTestId("acc-number").FillAsync(highRiskTransfer.Iban);
             await Page.GetByTestId("btn-next-1").ClickAsync();
 
@@ -102,10 +102,10 @@ namespace WorldBank.Automation.Tests.Tests
             // Arrange
             var malformedData = BankingDataFactory.CreateWireTransfer_MalformedIban();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+			await Page.GotoAsync(TransferUrl);
 
-            // Act
-            await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
+			// Act
+			await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
             await Page.GetByTestId("acc-number").FillAsync(malformedData.Iban);
             await Page.GetByTestId("btn-next-1").ClickAsync();
 
@@ -120,9 +120,9 @@ namespace WorldBank.Automation.Tests.Tests
             // Arrange
             var badSwiftData = BankingDataFactory.CreateWireTransfer_InvalidSwiftFormat();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+			await Page.GotoAsync(TransferUrl);
 
-            await Page.GetByTestId("recipient-select").SelectOptionAsync("global");
+			await Page.GetByTestId("recipient-select").SelectOptionAsync("global");
             await Page.GetByTestId("acc-number").FillAsync(badSwiftData.Iban);
             await Page.GetByTestId("btn-next-1").ClickAsync();
 
@@ -137,7 +137,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Dashboard_DynamicLedgerSearch_ShouldUpdateVisibleBalanceSum()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
 
             // Fetch initial row visibility counts dynamically
             var initialRows = Page.Locator(".ledger-row:visible");
@@ -158,7 +158,7 @@ namespace WorldBank.Automation.Tests.Tests
             // Arrange - Retrieves massive generated 255-character string
             var edgeUser = DataFactory.CreateUser_ExtremeNameLength();
 
-            await AuthenticateAndNavigateAsync(LoginUrl);
+            await Page.GotoAsync(LoginUrl);
 
             // Act - Inject data into inputs to verify layouts hold bounding wrappers
             await Page.GetByPlaceholder("Username").FillAsync(edgeUser.Username);
@@ -172,7 +172,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task NotificationModal_EscKeyPreserve_ShouldCloseModalCleanly()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
 
             // Open Modal
             await Page.GetByTestId("btn-notifications").ClickAsync();
@@ -196,7 +196,7 @@ namespace WorldBank.Automation.Tests.Tests
             var kyc = BankingDataFactory.CreateValidKycProfile();
             var user = DataFactory.CreateValidUser();
 
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
 
             // Injecting data securely into dynamic data fields
             var profileContainer = Page.Locator("#user-profile-widget");
@@ -211,7 +211,7 @@ namespace WorldBank.Automation.Tests.Tests
         {
             // Arrange
             var user = DataFactory.CreateValidUser();
-            await AuthenticateAndNavigateAsync(LoginUrl);
+            await Page.GotoAsync(LoginUrl);
 
             await Page.GetByPlaceholder("Username").FillAsync(user.Username);
             await Page.GetByPlaceholder("Password").FillAsync(user.Password);

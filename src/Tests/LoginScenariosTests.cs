@@ -13,9 +13,11 @@ namespace WorldBank.Automation.Tests.Tests
         [SetUp]
         public async Task NavigateToHome()
         {
-            // WaitUntilState.Commit resolves the promise immediately upon network response, 
-            // saving Playwright from crashing when the aggressive JS redirect fires a millisecond later.
-            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/index.html", new PageGotoOptions { WaitUntil = WaitUntilState.Commit });
+            // Dynamically build the URL based on the injected environment variable
+            string homeUrl = $"{AppConfig.GetBaseUrl()}/index.html";
+
+            // Navigate directly to the environment-specific home page
+            await Page.GotoAsync(homeUrl);
         }
 
         // 1. Standard Happy Path

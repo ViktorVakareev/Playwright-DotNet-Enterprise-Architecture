@@ -17,6 +17,15 @@ namespace WorldBank.Automation.Tests.Tests
     [Category("Visual")]
     public class VisualRegressionTests : AiTriage // Inherits AI capabilities and Context initialization
     {
+        [SetUp]
+        public async Task SetupNavigation()
+        {
+            string dashboardUrl = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
+
+            // The browser context is pre-authenticated via AiTriage and GlobalSetup.
+            // We bypass the UI login completely and route directly to the secure URL.
+            await Page.GotoAsync(dashboardUrl);
+        }
         /* ==========================================
            DASHBOARD TESTS (THEMES & Z-INDEX)
            ========================================== */
@@ -24,10 +33,6 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Dashboard_LightMode_ShouldRenderBaseline()
         {
-            // Dynamically construct the URL
-            string url = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-            await AuthenticateAndNavigateAsync(url);
-
             // Wait for a core element to render to guarantee the DOM is painted before snapping
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
 
@@ -38,9 +43,6 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Dashboard_DarkMode_ShouldRenderCorrectly()
         {
-            string url = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-            await AuthenticateAndNavigateAsync(url);
-
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
 
             await Page.Locator("#btn-dark-mode").ClickAsync();
@@ -51,9 +53,6 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Dashboard_NotificationModal_ShouldOverlayCorrectly()
         {
-            string url = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-            await AuthenticateAndNavigateAsync(url);
-
             await Page.Locator("#btn-notifications").ClickAsync();
 
             var modal = Page.Locator("#notification-modal");
@@ -70,10 +69,6 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task WireTransfer_Step1_ShouldRenderCorrectly()
         {
-            // Note: Update this to the exact mock URL if transfer is handled inside the dashboard
-            string url = $"{AppConfig.GetBaseUrl()}/transfer.html";
-            await AuthenticateAndNavigateAsync(url);
-
             // Ensure the form is painted
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Initiate Wire Transfer" })).ToBeVisibleAsync();
 
@@ -83,9 +78,6 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task WireTransfer_Step2_ShouldRenderCorrectly()
         {
-            string url = $"{AppConfig.GetBaseUrl()}/transfer.html";
-            await AuthenticateAndNavigateAsync(url);
-
             // Swap fragile text selector for a robust ARIA role locator
             await Page.GetByRole(AriaRole.Button, new() { Name = "Next Step" }).ClickAsync();
 

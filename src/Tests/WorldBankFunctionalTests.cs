@@ -18,21 +18,21 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Nav_Dashboard_LoadsCorrectTitle()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Expect(Page).ToHaveTitleAsync("Dashboard - WorldBank Mock");
         }
 
         [Test]
         public async Task Nav_AppTitle_IsVisible()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Expect(Page.GetByTestId("app-title")).ToHaveTextAsync("WorldBank Enterprise");
         }
 
         [Test]
         public async Task Nav_DarkModeToggle_ChangesThemeAttribute()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Page.GetByTestId("btn-dark-mode").ClickAsync();
 
             // Check if the HTML tag has the dark theme data attribute
@@ -43,7 +43,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Nav_WireTransferButton_NavigatesToTransferPage()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Page.GetByTestId("btn-nav-transfer").ClickAsync();
 
             // Using Regex to handle dynamic environment base URLs flexibly
@@ -57,7 +57,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Grid_LedgerTable_RendersDefaultRows()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             var rows = Page.Locator(".ledger-row");
             await Expect(rows).ToHaveCountAsync(3);
         }
@@ -65,7 +65,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Grid_Search_FiltersVisibleRows()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Page.GetByTestId("search-ledger").FillAsync("tech llc");
 
             // Upgraded to Playwright's native :visible pseudo-selector
@@ -77,7 +77,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Grid_Search_NoResultsShowsErrorMessage()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Page.GetByTestId("search-ledger").FillAsync("bitcoin");
 
             await Expect(Page.GetByTestId("no-results-msg")).ToBeVisibleAsync();
@@ -86,7 +86,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Grid_Search_ClearingFilterRestoresAllRows()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Page.GetByTestId("search-ledger").FillAsync("cloud");
             await Page.GetByTestId("search-ledger").ClearAsync();
 
@@ -97,7 +97,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Grid_NotificationModal_OpensAndCloses()
         {
-            await AuthenticateAndNavigateAsync(DashboardUrl);
+            await Page.GotoAsync(DashboardUrl);
             await Page.GetByTestId("btn-notifications").ClickAsync();
             await Expect(Page.GetByTestId("notification-modal")).ToBeVisibleAsync();
 
@@ -112,7 +112,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Form_Step1_SubmitWithoutRecipient_ShowsError()
         {
-            await AuthenticateAndNavigateAsync(TransferUrl);
+            await Page.GotoAsync(TransferUrl);
             await Page.GetByTestId("acc-number").FillAsync("1234567890");
             await Page.GetByTestId("btn-next-1").ClickAsync();
 
@@ -123,7 +123,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Form_Step1_AccountNumberTooShort_ShowsError()
         {
-            await AuthenticateAndNavigateAsync(TransferUrl);
+            await Page.GotoAsync(TransferUrl);
             await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
             await Page.GetByTestId("acc-number").FillAsync("12345"); // Only 5 digits
             await Page.GetByTestId("btn-next-1").ClickAsync();
@@ -139,7 +139,7 @@ namespace WorldBank.Automation.Tests.Tests
             // Inject dynamic boundary data
             var testData = BankingDataFactory.CreateWireTransfer_NegativeAmount();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+            await Page.GotoAsync(TransferUrl);
             await FillValidStep1(testData);
 
             await Page.GetByTestId("transfer-date").FillAsync(DateTime.Now.ToString("yyyy-MM-dd"));
@@ -157,7 +157,7 @@ namespace WorldBank.Automation.Tests.Tests
             // Inject dynamic boundary data
             var testData = BankingDataFactory.CreateWireTransfer_ZeroAmount();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+            await Page.GotoAsync(TransferUrl);
             await FillValidStep1(testData);
 
             await Page.GetByTestId("transfer-date").FillAsync(DateTime.Now.ToString("yyyy-MM-dd"));
@@ -173,7 +173,7 @@ namespace WorldBank.Automation.Tests.Tests
             // We use valid financial data here, because we are testing the Date boundary
             var testData = BankingDataFactory.CreateValidWireTransfer();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+            await Page.GotoAsync(TransferUrl);
             await FillValidStep1(testData);
 
             var yesterday = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
@@ -190,7 +190,7 @@ namespace WorldBank.Automation.Tests.Tests
             // Use valid financial data
             var testData = BankingDataFactory.CreateValidWireTransfer();
 
-            await AuthenticateAndNavigateAsync(TransferUrl);
+            await Page.GotoAsync(TransferUrl);
             await FillValidStep1(testData);
 
             // Intentionally skip the Date field
