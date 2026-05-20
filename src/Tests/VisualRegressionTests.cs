@@ -33,11 +33,22 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task Dashboard_DarkMode_ShouldRenderCorrectly()
         {
+            // 1. Ensure we are on the page natively within this test thread
+            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard");
+            await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard.*"));
+
+            // 2. Wait for the page to completely hydrate (DOM is ready)
+            await Expect(Page.GetByTestId("app-title")).ToBeVisibleAsync();
+
+            // ❌ DELETED: await Expect(Page.Locator("body")).ToHaveAttributeAsync("data-theme", "light");
+
+            // 3. Act: Trigger the dark mode switch
             await Page.Locator("#btn-dark-mode").ClickAsync();
 
-            // Ensure the theme change has processed via CSS
-            await Expect(Page.Locator("body")).ToHaveAttributeAsync("data-theme", "dark");
+            // 4. Await hydration of the dark theme CSS transformation
+            await Expect(Page.Locator("html")).ToHaveAttributeAsync("data-theme", "dark");
 
+            // 5. Assert: Verify the dark mode baseline
             await Verifier.Verify(Page);
         }
 
