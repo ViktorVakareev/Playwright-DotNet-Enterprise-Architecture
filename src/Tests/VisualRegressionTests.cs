@@ -1,51 +1,42 @@
-﻿using System.Runtime.CompilerServices;
-using Microsoft.Playwright;
+﻿using System.Text.RegularExpressions;
 using WorldBank.Automation.Tests.Infrastructure;
 
 namespace WorldBank.Automation.Tests.Tests
 {
-    // A ModuleInitializer automatically sets up the Verify engine 
-    // when the NUnit assembly loads, before any tests run.
-    public static class VerifySetup
-    {
-        [ModuleInitializer]
-        public static void Init() => VerifyPlaywright.Initialize();
-    }
-
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
     [Category("Visual")]
-    public class VisualRegressionTests : AiTriage // Inherits AI capabilities and Context initialization
+    public class VisualRegressionTests : AiTriage
     {
         [SetUp]
-        public async Task SetupNavigation()
+        public async Task SetupDashboardAsync()
         {
-            string dashboardUrl = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
+            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard");
 
-            // The browser context is pre-authenticated via AiTriage and GlobalSetup.
-            // We bypass the UI login completely and route directly to the secure URL.
-            await Page.GotoAsync(dashboardUrl);
+            // Wait for the app router to confirm we are in the secure zone
+            await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard.*"));
+
+            // Wait for a core component to ensure JS hydration is complete
+            await Expect(Page.GetByTestId("app-title")).ToBeVisibleAsync();
         }
+
         /* ==========================================
-           DASHBOARD TESTS (THEMES & Z-INDEX)
+           DASHBOARD TESTS
            ========================================== */
 
         [Test]
         public async Task Dashboard_LightMode_ShouldRenderBaseline()
         {
-            // Wait for a core element to render to guarantee the DOM is painted before snapping
-            await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
-
-            // Verifier captures BOTH the Screenshot and the HTML DOM State
             await Verifier.Verify(Page);
         }
 
         [Test]
         public async Task Dashboard_DarkMode_ShouldRenderCorrectly()
         {
-            await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "World Bank Secure Dashboard" })).ToBeVisibleAsync();
-
             await Page.Locator("#btn-dark-mode").ClickAsync();
+
+            // Ensure the theme change has processed via CSS
+            await Expect(Page.Locator("body")).ToHaveAttributeAsync("data-theme", "dark");
 
             await Verifier.Verify(Page);
         }
@@ -58,32 +49,37 @@ namespace WorldBank.Automation.Tests.Tests
             var modal = Page.Locator("#notification-modal");
             await Expect(modal).ToBeVisibleAsync();
 
-            // Verifying the whole page ensures we check the background mask/z-index
-            await Verifier.Verify(Page);
+            // 🏆 FIXED: Clean string-based line scrubber that avoids syntax nesting issues.
+            // Any line containing your dynamic text will be cleanly scrubbed out.
+            var settings = new VerifySettings();
+            settings.ScrubLines(line => line.Contains("notification-content"));
+
+            await Verifier.Verify(Page, settings);
         }
 
         /* ==========================================
-           WIRE TRANSFER TESTS (STEPPER STATE)
+           WIRE TRANSFER TESTS
            ========================================== */
 
         [Test]
         public async Task WireTransfer_Step1_ShouldRenderCorrectly()
         {
-            // Ensure the form is painted
-            await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Initiate Wire Transfer" })).ToBeVisibleAsync();
-
+            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/transfer.html");
+            await Expect(Page.GetByTestId("step-1-form")).ToBeVisibleAsync();
             await Verifier.Verify(Page);
         }
 
         [Test]
         public async Task WireTransfer_Step2_ShouldRenderCorrectly()
         {
-            // Swap fragile text selector for a robust ARIA role locator
-            await Page.GetByRole(AriaRole.Button, new() { Name = "Next Step" }).ClickAsync();
+            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/transfer.html");
 
-            // Optional: If there is a specific UI transition, wait for the Step 2 header/indicator
-            // await Expect(Page.Locator(".step-2-active")).ToBeVisibleAsync();
+            // Fixed the method names to include the necessary Async suffixes
+            await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
+            await Page.GetByTestId("acc-number").FillAsync("1234567890");
+            await Page.GetByTestId("btn-next-1").ClickAsync();
 
+            await Expect(Page.GetByTestId("step-2-form")).ToBeVisibleAsync();
             await Verifier.Verify(Page);
         }
     }
