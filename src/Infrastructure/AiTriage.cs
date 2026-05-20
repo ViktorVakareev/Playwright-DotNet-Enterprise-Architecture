@@ -45,15 +45,15 @@ public class AiTriage : PageTest
         }
     }
 
-    // 2. Set your Mock App BaseURL (This IS a valid Playwright override)
+    // Playwright natively overrides the context options to inject the saved cookies
     public override BrowserNewContextOptions ContextOptions()
     {
-        var options = base.ContextOptions() ?? new BrowserNewContextOptions();
-        options.BaseURL = "http://sandbox.worldbank.internal:8081";
-        options.IgnoreHTTPSErrors = true;
-
-        return options;
+        return new BrowserNewContextOptions
+        {
+            StorageStatePath = GlobalSetup.AuthStatePath
+        };
     }
+
     protected async Task AuthenticateAndNavigateAsync(string targetSecureUrl)
     {
         var sessionUser = DataFactory.CreateValidUser();
