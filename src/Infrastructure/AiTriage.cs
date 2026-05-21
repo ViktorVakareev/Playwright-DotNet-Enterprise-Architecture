@@ -45,6 +45,21 @@ public class AiTriage : PageTest
         }
     }
 
+    public BrowserTypeLaunchOptions LaunchOptions()
+    {
+        var options = new BrowserTypeLaunchOptions();
+
+        // 🛡️ ENTERPRISE FIX: Prevent Docker container deadlocks
+        options.Args = new[]
+        {
+        "--disable-dev-shm-usage", // Forces Chromium to use /tmp instead of 64MB /dev/shm
+        "--disable-gpu",           // Redundant in headless, but ensures no hardware acceleration hangs
+        "--no-sandbox"             // Required for running Chromium inside standard Jenkins Docker containers
+    };
+
+        return options;
+    }
+
     public override BrowserNewContextOptions ContextOptions()
     {
         var options = base.ContextOptions() ?? new BrowserNewContextOptions();
