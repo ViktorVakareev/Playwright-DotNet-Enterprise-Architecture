@@ -21,12 +21,12 @@ pipeline {
 
     environment {
         TARGET_ENV = "${params.TARGET_ENV}"
-        ALLURE_RESULTS_DIR = 'bin/Release/net10.0/allure-results'
+        ALLURE_RESULTS_DIR = "bin/Release/net10.0/allure-results"
         AI_TRIAGE_ENABLED = "${params.RUN_AI_TRIAGE}"
-        OLLAMA_API_URL = 'http://host.docker.internal:11434'
+        OLLAMA_API_URL = "http://host.docker.internal:11434"
         PLAYWRIGHT_BROWSER = "${params.browser}"
         RETRY_FAILED = "${params.retryFailed}"
-        DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = '1'
+        DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1"
         DOTNET_ROOT = "${HOME}/.dotnet"
         PATH = "${HOME}/.dotnet:${HOME}/.dotnet/tools:${env.PATH}"
     }
@@ -43,8 +43,8 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    if (statusCode == '200') {
-                        echo '✅ App is UP and Healthy! (Status: 200)'
+                    if (statusCode == "200") {
+                        echo "✅ App is UP and Healthy! (Status: 200)"
                     } else {
                         error("❌ Health check failed! Received HTTP Status: ${statusCode} for ${targetUrl}")
                     }
@@ -87,21 +87,24 @@ pipeline {
             }
             steps {
                 script {
-                    echo '--- Checking Outbound Network & DNS ---'
+                    echo "--- Checking Outbound Network & DNS ---"
                     sh "curl -I https://viktorvakareev.github.io || echo 'WARNING: Cannot reach GitHub Pages!'"
 
                     sh "ls -la src/bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
 
-                    def filterFlag = params.TEST_FILTER ? "--filter \"${params.TEST_FILTER}\'' : ""
+                    // 🚀 FIXED: Replaced the fragile ternary operator with a robust, compiler-safe IF statement
+                    def filterFlag = ""
+                    if (params.TEST_FILTER) {
+                        filterFlag = "--filter \"${params.TEST_FILTER}\""
+                    }
 
-                    echo '====================================================='
-                    echo '🚀 INITIATING PLAYWRIGHT SUITE'
+                    echo "====================================================="
+                    echo "🚀 INITIATING PLAYWRIGHT SUITE"
                     echo "🌍 TARGET ENVIRONMENT: ${env.TARGET_ENV.toUpperCase()}"
                     echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
-                    echo '====================================================='
+                    echo "====================================================="
 
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        // 🏆 FIXED: Closed the multi-line string correctly
                         sh """
                         dotnet test src/ \
                             --configuration Release \
@@ -124,8 +127,7 @@ pipeline {
             echo 'Archiving Playwright Traces and AI Triage Reports...'
             archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md, **/TestResults/*.trx', allowEmptyArchive: true
             allure includeProperties: false, results: [[path: "${env.ALLURE_RESULTS_DIR}"]]
-
-            // 🏆 FIXED: Cleaned up comment syntax to prevent parsing errors
+            
             // Scan for the XML result files and publish them
             junit testResults: '**/TestResults/*.xml', allowEmptyResults: true, keepLongStdio: true
 
@@ -134,7 +136,7 @@ pipeline {
                     echo "Triggering qTest upload to: ${params.qTestFolderUrl}"
                     sh 'echo "qTest upload script executed."'
                 } else {
-                    echo 'qTest Folder URL is empty. Skipping qTest publish.'
+                    echo "qTest Folder URL is empty. Skipping qTest publish."
                 }
             }
         }
