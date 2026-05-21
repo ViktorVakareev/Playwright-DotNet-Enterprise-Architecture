@@ -37,12 +37,12 @@ pipeline {
                 script {
                     def targetUrl = "https://viktorvakareev.github.io/Playwright-DotNet-Enterprise-Architecture/WorldBankMockApp/${params.TARGET_ENV}/"
                     echo "Pinging Health Check Endpoint at: ${targetUrl}"
-                    
+
                     def statusCode = sh(
-                        script: "curl -s -L -o /dev/null -w \"%{http_code}\" ${targetUrl} || echo '000'", 
+                        script: "curl -s -L -o /dev/null -w \"%{http_code}\" ${targetUrl} || echo '000'",
                         returnStdout: true
                     ).trim()
-                    
+
                     if (statusCode == "200") {
                         echo "✅ App is UP and Healthy! (Status: 200)"
                     } else {
@@ -71,10 +71,10 @@ pipeline {
                 echo "--- Restoring and Building ---"
                 dotnet restore src/
                 dotnet build src/ --configuration Release --no-restore
-                
+
                 echo "--- Installing PowerShell Core (pwsh) ---"
                 dotnet tool update --global PowerShell
-                
+
                 echo "--- Installing Browser Binaries (Official API) ---"
                 pwsh src/bin/Release/net10.0/playwright.ps1 install chromium
                 '''
@@ -91,25 +91,25 @@ pipeline {
                     sh "curl -I https://viktorvakareev.github.io || echo 'WARNING: Cannot reach GitHub Pages!'"
 
                     sh "ls -la src/bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
-                    
+
                     def filterFlag = params.TEST_FILTER ? "--filter \"${params.TEST_FILTER}\"" : ""
-                    
+
                     echo "====================================================="
                     echo "🚀 INITIATING PLAYWRIGHT SUITE"
                     echo "🌍 TARGET ENVIRONMENT: ${env.TARGET_ENV.toUpperCase()}"
                     echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
                     echo "====================================================="
-                    
+
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
                         dotnet test src/ \
-                            --configuration Release \
-                            --no-build \
-                            ${filterFlag} \
-                            --logger 'trx;LogFileName=TestResults.trx' \
-                            --results-directory ./TestResults \
-                            -- NUnit.NumberOfTestWorkers=4
-                        """
+                --configuration Release \
+        --no-build \
+        ${filterFlag} \
+        --logger 'trx;LogFileName=TestResults.trx' \
+        --logger 'junit;LogFilePath=junit-results.xml' \
+        --results-directory ./TestResults \
+        -- NUnit.NumberOfTestWorkers=4
                     }
                 }
             }
@@ -121,8 +121,9 @@ pipeline {
             echo "Pipeline execution complete for environment: ${env.TARGET_ENV}"
             echo 'Archiving Playwright Traces and AI Triage Reports...'
             archiveArtifacts artifacts: '**/playwright-traces/*.zip, **/AiTriage_Summary.md, **/TestResults/*.trx', allowEmptyArchive: true
-            allure includeProperties: false, results: [[path: "${env.ALLURE_RESULTS_DIR}"]]
-            
+            allure includeProperties: false, results: [[path: "${env.ALLURE_RESULTS_DIR}"]]// Scan for the XML result files and publish them
+            junit testResults: '**/TestResults/*.xml', allowEmptyResults: true, keepLongStdio: true
+
             script {
                 if (params.qTestFolderUrl != '') {
                     echo "Triggering qTest upload to: ${params.qTestFolderUrl}"
