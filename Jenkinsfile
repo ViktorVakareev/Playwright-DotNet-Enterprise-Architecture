@@ -92,7 +92,6 @@ pipeline {
 
                     sh "ls -la src/bin/Release/net10.0/ReportPortal.config.json || echo 'CRITICAL: Config file missing!'"
 
-                    // 🚀 FIXED: Replaced the fragile ternary operator with a robust, compiler-safe IF statement
                     def filterFlag = ""
                     if (params.TEST_FILTER) {
                         filterFlag = "--filter \"${params.TEST_FILTER}\""
@@ -103,6 +102,10 @@ pipeline {
                     echo "🌍 TARGET ENVIRONMENT: ${env.TARGET_ENV.toUpperCase()}"
                     echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
                     echo "====================================================="
+
+                    echo "--- Installing Browser Binaries & OS Dependencies ---"
+                    // 🚀 Added --with-deps to guarantee headless Linux execution
+                    pwsh src/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
 
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
