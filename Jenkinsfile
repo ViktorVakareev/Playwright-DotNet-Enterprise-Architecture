@@ -75,8 +75,9 @@ pipeline {
                 echo "--- Installing PowerShell Core (pwsh) ---"
                 dotnet tool update --global PowerShell
 
-                echo "--- Installing Browser Binaries (Official API) ---"
-                pwsh src/bin/Release/net10.0/playwright.ps1 install chromium
+                echo "--- Installing Browser Binaries & OS Dependencies ---"
+                pwsh src/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
+                """
                 '''
             }
         }
@@ -102,10 +103,6 @@ pipeline {
                     echo "🌍 TARGET ENVIRONMENT: ${env.TARGET_ENV.toUpperCase()}"
                     echo "🔍 TEST FILTER: ${params.TEST_FILTER ?: 'ALL'}"
                     echo "====================================================="
-
-                    echo "--- Installing Browser Binaries & OS Dependencies ---"
-                    // 🚀 Added --with-deps to guarantee headless Linux execution
-                    pwsh src/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
 
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                         sh """
