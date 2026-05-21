@@ -74,10 +74,6 @@ pipeline {
 
                 echo "--- Installing PowerShell Core (pwsh) ---"
                 dotnet tool update --global PowerShell
-
-                echo "--- Installing Browser Binaries & OS Dependencies ---"
-                pwsh src/bin/Release/net10.0/playwright.ps1 install chromium --with-deps
-                """
                 '''
             }
         }
