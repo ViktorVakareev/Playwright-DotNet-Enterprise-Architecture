@@ -14,7 +14,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task NavigateToHome()
         {
             // Dynamically build the URL based on the injected environment variable
-            string homeUrl = $"{AppConfig.GetBaseUrl()}/index.html";
+            string homeUrl = $"{AppConfig.GetBaseUrl()}/";
 
             // Navigate directly to the environment-specific home page
             await Page.GotoAsync(homeUrl);
