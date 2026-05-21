@@ -45,13 +45,19 @@ public class AiTriage : PageTest
         }
     }
 
-    // Playwright natively overrides the context options to inject the saved cookies
     public override BrowserNewContextOptions ContextOptions()
     {
-        return new BrowserNewContextOptions
-        {
-            StorageStatePath = GlobalSetup.AuthStatePath
-        };
+        var options = base.ContextOptions() ?? new BrowserNewContextOptions();
+
+        // 🛡️ ISOLATION: Inject a unique GUID or NUnit Worker ID into the path.
+        // This guarantees parallel browser threads will NEVER lock each other's video files.
+        var threadId = TestContext.CurrentContext.WorkerId ?? Guid.NewGuid().ToString();
+        var videoDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, "playwright-videos", threadId);
+
+        options.RecordVideoDir = videoDir;
+        options.RecordVideoSize = new RecordVideoSize { Width = 1920, Height = 1080 };
+
+        return options;
     }
 
     protected async Task AuthenticateAndNavigateAsync(string targetSecureUrl)
@@ -76,37 +82,101 @@ public class AiTriage : PageTest
     }
 
     [TearDown]
-    public async Task TriageOnFailure()
+    public async Task ExecuteEnterpriseTeardownAsync()
     {
-        if (TestContext.CurrentContext.Result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+        var testResult = TestContext.CurrentContext.Result.Outcome.Status;
+        bool isFailed = testResult == NUnit.Framework.Interfaces.TestStatus.Failed;
+        var testName = TestContext.CurrentContext.Test.Name;
+
+        /* ==========================================
+           PHASE 1: VISUAL ARTIFACTS & I/O CLEANUP
+           Must execute first to guarantee evidence isn't lost 
+           if external AI network calls timeout.
+           ========================================== */
+
+        if (isFailed)
+        {
+            // Capture Full Page Screenshot safely
+            var screenshotFileName = $"{TestContext.CurrentContext.Test.MethodName}_{Guid.NewGuid():N}.png";
+            var screenshotPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, screenshotFileName);
+
+            await Page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = screenshotPath,
+                FullPage = true
+            });
+
+            TestContext.AddTestAttachment(screenshotPath, "📸 UI State on Failure");
+        }
+
+        // 🛡️ CRITICAL: Close the Context to force Playwright to flush the .webm video file
+        await Context.CloseAsync();
+
+        // I/O Resilient Video Processing
+        if (Page.Video != null)
+        {
+            if (isFailed)
+            {
+                var videoPath = await Page.Video.PathAsync();
+                TestContext.AddTestAttachment(videoPath, "🎥 Execution Recording");
+            }
+            else
+            {
+                try
+                {
+                    // Immediate deterministic cleanup for passing tests
+                    await Page.Video.DeleteAsync();
+                }
+                catch (IOException ex)
+                {
+                    TestContext.Progress.WriteLine($"[WARNING] Could not immediately delete video artifact for passing test. Handled by Jenkins lifecycle. Exception: {ex.Message}");
+                }
+            }
+        }
+
+        /* ==========================================
+           PHASE 2: AI FAILURE TRIAGE
+           Executes only after browser processes are safely terminated.
+           ========================================== */
+
+        if (isFailed)
         {
             bool isAiEnabled = Environment.GetEnvironmentVariable("AI_TRIAGE_ENABLED")?.ToLower() == "true";
 
             if (isAiEnabled)
             {
-                var testName = TestContext.CurrentContext.Test.Name;
                 var stackTrace = TestContext.CurrentContext.Result.StackTrace ?? "No stack trace available";
                 var errorMessage = TestContext.CurrentContext.Result.Message ?? "No error message available";
 
+                // Execute local LLM triage
                 var aiAnalysis = await ProcessAiRequestWithQueue(errorMessage, stackTrace);
 
-                // 1. Create the entry
+                // 1. Build the Markdown Entry
                 string entry = $"### ❌ {testName}\n\n**Analysis:**\n{aiAnalysis}\n\n**Error:** `{errorMessage}`\n\n---\n";
 
-                // 2. Add to global list (for Allure summary)
+                // 2. Append to Global List (For aggregated pipeline summary)
                 GlobalSetup.AiReports.Add(entry);
 
+                // 3. Write to physical workspace file for Jenkins artifact archiving
                 var workspacePath = Environment.GetEnvironmentVariable("WORKSPACE") ?? ".";
                 var reportPath = Path.Combine(workspacePath, "AiTriage_Summary.md");
                 await File.AppendAllTextAsync(reportPath, entry);
 
+                // 4. Inject directly into the Allure HTML Report Context
                 try
                 {
-                    AllureLifecycle.Instance.AddAttachment($"AI Analysis - {testName}", "text/markdown", Encoding.UTF8.GetBytes(aiAnalysis), ".md");
+                    // Using AllureLifecycle directly here is brilliant because it allows us 
+                    // to inject native Markdown rendering without saving individual physical .md files
+                    AllureLifecycle.Instance.AddAttachment(
+                        $"🤖 AI Analysis - {testName}",
+                        "text/markdown",
+                        Encoding.UTF8.GetBytes(aiAnalysis),
+                        ".md"
+                    );
                 }
                 catch (ArgumentNullException)
                 {
-                    TestContext.Progress.WriteLine($"[WARNING] Allure lost context for {testName}.");
+                    TestContext.Progress.WriteLine($"[WARNING] Allure lost context for {testName}. Cannot attach AI logic.");
                 }
             }
         }

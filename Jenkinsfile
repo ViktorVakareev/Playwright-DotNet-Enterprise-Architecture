@@ -4,7 +4,8 @@ pipeline {
     options {
         ansiColor('xterm')
         timeout(time: 30, unit: 'MINUTES')
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Keeps a max of 10 builds, but aggressively deletes artifacts (like .webm videos) after 2 days.
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactDaysToKeepStr: '2'))
         disableConcurrentBuilds()
     }
 
