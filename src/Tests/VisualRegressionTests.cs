@@ -4,6 +4,7 @@ using WorldBank.Automation.Tests.Infrastructure;
 namespace WorldBank.Automation.Tests.Tests
 {
     [TestFixture]
+    [Ignore("🚧 PENDING: Linux Container Baseline Generation")]
     [Parallelizable(ParallelScope.All)]
     [Category("Visual")]
     public class VisualRegressionTests : AiTriage

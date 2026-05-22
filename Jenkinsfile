@@ -110,7 +110,7 @@ pipeline {
                             --logger 'trx;LogFileName=TestResults.trx' \
                             --logger 'junit;LogFilePath=junit-results.xml' \
                             --results-directory ./TestResults \
-                            -- NUnit.NumberOfTestWorkers=4
+                            -- NUnit.NumberOfTestWorkers=1
                         """
                     }
                 }
