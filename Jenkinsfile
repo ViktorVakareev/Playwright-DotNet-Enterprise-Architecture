@@ -126,7 +126,7 @@ pipeline {
             allure includeProperties: false, results: [[path: "${env.ALLURE_RESULTS_DIR}"]]
             
             // Scan for the XML result files and publish them
-            junit testResults: '**/TestResults/*.xml', allowEmptyResults: true, keepLongStdio: true
+            junit testResults: '**/junit-results.xml', allowEmptyResults: true
 
             script {
                 if (params.qTestFolderUrl != '') {

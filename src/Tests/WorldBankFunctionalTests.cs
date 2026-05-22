@@ -26,7 +26,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task Nav_AppTitle_IsVisible()
         {
             await Page.GotoAsync(DashboardUrl);
-            await Expect(Page.GetByTestId("app-title")).ToHaveTextAsync("WorldBank Enterprise");
+            await Expect(Page.GetByTestId("app-title")).ToHaveTextAsync("Dashboard Overview");
         }
 
         [Test]
