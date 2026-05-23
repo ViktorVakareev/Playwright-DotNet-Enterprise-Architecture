@@ -2,11 +2,9 @@ using Allure.Commons;
 using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Allure.Core;
-using System.IO;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using WorldBank.Automation.Tests.Data;
 
 namespace WorldBank.Automation.Tests.Infrastructure;
@@ -75,24 +73,23 @@ public class AiTriage : PageTest
         return options;
     }
 
-    protected async Task AuthenticateAndNavigateAsync(string targetSecureUrl)
+    protected async Task AuthenticateAndNavigateAsync(string targetRelativeUrl)
     {
         var sessionUser = DataFactory.CreateValidUser();
 
-        // ⚠️ CRITICAL: This must be native Page.GotoAsync
-        // Inside AiTriage.cs -> AuthenticateAndNavigateAsync()
-        await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
+        await Page.GotoAsync("login.html");
 
+        
         await Page.GetByPlaceholder("Username").FillAsync(sessionUser.Username);
         await Page.GetByPlaceholder("Password").FillAsync(sessionUser.Password);
         await Page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();
 
         await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard.*"));
 
-        if (!Page.Url.Contains(targetSecureUrl))
+        if (!Page.Url.Contains(targetRelativeUrl))
         {
-            // ⚠️ CRITICAL: This must be native Page.GotoAsync
-            await Page.GotoAsync(targetSecureUrl);
+            // 🚀 ENTERPRISE FIX 3: Clean relative navigation
+            await Page.GotoAsync(targetRelativeUrl);
         }
     }
 

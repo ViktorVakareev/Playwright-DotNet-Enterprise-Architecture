@@ -12,9 +12,9 @@ namespace WorldBank.Automation.Tests.Tests
     [Category("CoreBanking")]
     public class WorldBankExtendedE2ETests : AiTriage
     {
-        private string TransferUrl => $"{AppConfig.GetBaseUrl()}/transfer.html";
-        private string DashboardUrl => $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-        private string LoginUrl => $"{AppConfig.GetBaseUrl()}/login.html";
+        private string TransferUrl => "transfer.html";
+        private string DashboardUrl => "dashboard.html";
+        private string LoginUrl => "login.html";
 
         #region Business Logic & Stepper Workflow Tests
 

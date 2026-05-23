@@ -10,8 +10,8 @@ namespace WorldBank.Automation.Tests.Tests
     public class WorldBankFunctionalTests : AiTriage // Inherits AI capabilities and Context initialization
     {
         // Computed properties dynamically resolve the environment URL at runtime
-        private string DashboardUrl => $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
-        private string TransferUrl => $"{AppConfig.GetBaseUrl()}/transfer.html";
+        private string DashboardUrl => "dashboard.html";
+        private string TransferUrl => "transfer.html";
 
         #region Group 1: Navigation & Rendering
 

@@ -14,7 +14,7 @@ namespace WorldBank.Automation.Tests.Tests
         [SetUp]
         public async Task SetupNavigation()
         {
-            string dashboardUrl = $"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard";
+            string dashboardUrl = "dashboard.html";
 
             // The browser context is pre-authenticated via AiTriage and GlobalSetup.
             // We bypass the UI login completely and route directly to the secure URL.

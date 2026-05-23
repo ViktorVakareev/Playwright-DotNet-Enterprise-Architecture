@@ -112,7 +112,7 @@
         function validateStep1() {
             let valid = true;
             if(!document.getElementById('recipient-select').value) { document.getElementById('recipient-error').style.display = 'block'; valid = false; } else { document.getElementById('recipient-error').style.display = 'none'; }
-            if(document.getElementById('acc-number').value.length !== 10) { document.getElementById('acc-error').style.display = 'block'; valid = false; } else { document.getElementById('acc-error').style.display = 'none'; }
+            if(document.getElementById('acc-number').value.length !== 22) { document.getElementById('acc-error').style.display = 'block'; valid = false; } else { document.getElementById('acc-error').style.display = 'none'; }
             if(valid) goToStep(2);
         }
 

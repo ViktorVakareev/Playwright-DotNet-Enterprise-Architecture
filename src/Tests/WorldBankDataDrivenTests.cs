@@ -14,7 +14,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task NavigateToTransferPage()
         {
            // Dynamically build the URL based on the injected environment variable
-			string transferUrl = $"{AppConfig.GetBaseUrl()}/transfer.html";
+			string transferUrl = "transfer.html";
 
 			// Navigate directly to the environment-specific home page
 			await Page.GotoAsync(transferUrl);

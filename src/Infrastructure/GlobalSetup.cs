@@ -41,7 +41,7 @@ namespace WorldBank.Automation.Tests // Adjust if your namespace includes .Infra
             var page = await context.NewPageAsync();
 
             // Navigate to login and authenticate
-            await page.GotoAsync($"{AppConfig.GetBaseUrl()}/login.html");
+            await page.GotoAsync("login.html");
             await page.GetByPlaceholder("Username").FillAsync("standarduser");
             await page.GetByPlaceholder("Password").FillAsync("password123");
             await page.GetByRole(AriaRole.Button, new() { Name = "Secure Login" }).ClickAsync();

@@ -12,7 +12,7 @@ namespace WorldBank.Automation.Tests.Tests
         [SetUp]
         public async Task SetupDashboardAsync()
         {
-            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard");
+            await Page.GotoAsync("dashboard.htm");
 
             // Wait for the app router to confirm we are in the secure zone
             await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard.*"));
@@ -35,7 +35,7 @@ namespace WorldBank.Automation.Tests.Tests
         public async Task Dashboard_DarkMode_ShouldRenderCorrectly()
         {
             // 1. Ensure we are on the page natively within this test thread
-            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/dashboard.html?role=standard");
+            await Page.GotoAsync("dashboard.html");
             await Expect(Page).ToHaveURLAsync(new Regex(".*dashboard.*"));
 
             // 2. Wait for the page to completely hydrate (DOM is ready)
@@ -76,7 +76,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task WireTransfer_Step1_ShouldRenderCorrectly()
         {
-            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/transfer.html");
+            await Page.GotoAsync("transfer.html");
             await Expect(Page.GetByTestId("step-1-form")).ToBeVisibleAsync();
             await Verifier.Verify(Page);
         }
@@ -84,7 +84,7 @@ namespace WorldBank.Automation.Tests.Tests
         [Test]
         public async Task WireTransfer_Step2_ShouldRenderCorrectly()
         {
-            await Page.GotoAsync($"{AppConfig.GetBaseUrl()}/transfer.html");
+            await Page.GotoAsync("transfer.html");
 
             // Fixed the method names to include the necessary Async suffixes
             await Page.GetByTestId("recipient-select").SelectOptionAsync("acme");
